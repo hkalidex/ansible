@@ -78,6 +78,10 @@ solutions:
       fm07labvca4.cps.intel.com:
         collector_group: FM7_IGBN
         credential: amr-vc-account
+      fm07labvcaorch1.fm.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+        
       # DMZ
       fms07vcacbs002.ed.cps.intel.com:
         collector_group: FM7_DMZ
