@@ -1,0 +1,40 @@
+---
+
+- name: Run VC Deployability Prechecks
+  vcenter_prechecks:
+    yml_file: "vars/{{ lookup('env','VROPS_ENV') }}-env.yml"
+    amr_username: "{{ vc_credentials.amr.username }}"
+    amr_password: "{{ vc_credentials.amr.password }}"
+    amr_vc_usergroup: "{{ vc_credentials.amr.username }}"
+    ed_username: "{{ vc_credentials.ed.username }}"
+    ed_password: "{{ vc_credentials.ed.password }}"
+    ed_vc_usergroup: "{{ vc_credentials.ed.username }}"
+    datastore_space: "{{ default_datastore_min_gb_threshold | default(2) }}"
+  register: precheck_results
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_deployability
+
+- name: Notify Team by email if Failure Occurs
+  mail:
+    host: "{{ smtp_server }}"
+    port: "{{ smtp_port }}"
+    subject: "Deployability Prechecks failed!"
+    to: "{{ email_pdl }}"
+    from: "{{donotreply.vrops@intel.com"
+    subtype: html
+    body: "{{ lookup('template', 'email-prechecks-fail.html') }}"
+  when: lookup('env','VROPS_ENV') != 'local' and (precheck_results.summary.connection_failures > 0 or precheck_results.summary.other_failures > 0)
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_deployability
+
+- name: Fail Build if General Precheck Failures Occurred
+  fail:
+    msg: >
+         Connection Failures: {{ precheck_results.summary.connection_failures }}, Other Failures: {{ precheck_results.summary.other_failures }}
+         {{ precheck_results }}
+  when: precheck_results.summary.connection_failures > 0 or precheck_results.summary.other_failures > 0
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_deployability

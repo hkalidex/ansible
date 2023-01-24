@@ -1,0 +1,70 @@
+---
+
+- name: Get master node thumbprint
+  shell: >
+         openssl s_client -connect {{ vrops_nodes.master.ip_address }}:443 | \
+         sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+         openssl x509 -fingerprint -noout | sed 's/.*=//'
+  register: vrops_master_stdout
+  changed_when: False
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_master_config
+    - vrops_master_thumbprint
+
+- name: Store master thumbprint
+  set_fact:
+    master_node_thumbprint: "{{ vrops_master_stdout.stdout }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_master_config
+    - vrops_master_thumbprint
+
+- name: Configure master node ({{ vrops_nodes.master.name }})
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/node/master
+    body: "{{ lookup('template', 'master-config.json') }}"
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 202,500
+    return_content: yes
+  register: master_init_response
+  retries: 20
+  delay: 10
+  until: master_init_response.status == 202 or 'Cluster is already configured' in master_init_response.content
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_master_config
+
+- name: Wait for node ({{ vrops_nodes.master.name }}) to enter cluster.
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/deployment/cluster/current
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 200
+    return_content: yes
+  register: configuration_status
+  until: (vrops_nodes.master.name in configuration_status.content) or (vrops_nodes.master.ip_address in configuration_status.content)
+  retries: 60
+  delay: 30
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_master_config
+
+- name: Wait 5 minutes before attempting to add the next nodes
+  pause:
+    minutes: 5
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_master_config

@@ -1,0 +1,6 @@
+{
+  "text": "Unauthorized AD group '{{ item.name }}' found with permissions {{ item['role-permissions'] }} in vROPs instance {{ vrops_nodes.master.fqdn }}", 
+  "channel": "#vrops",
+  "link_names": 1, 
+  "username": "{{ vrops_nodes.master.name }}" 
+}

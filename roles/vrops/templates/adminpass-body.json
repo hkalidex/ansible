@@ -1,0 +1,4 @@
+
+{
+  "password":"{{ svc_vrops_admin_password }}"
+}

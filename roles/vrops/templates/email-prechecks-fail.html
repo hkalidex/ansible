@@ -1,0 +1,7 @@
+<html><body>
+    <p>At least one of the following vCenter deployability prechecks failed before starting the {{ lookup('env','VROPS_ENV') }} environment build:<br />,
+       Connection Failures: {{ precheck_results.summary.connection_failures }}<br /></p>
+    <p> Other Failures: {{ precheck_results.summary.other_failures }}</p>
+    <p>See build logs for exact details.</p>
+  </body>
+</html>

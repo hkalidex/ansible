@@ -1,0 +1,86 @@
+---
+
+- name: Get state of installed solutions from master node.
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/node/config
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 200
+  register: node_state_response
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_solutions_detect
+    - vrops_solutions_from_files
+
+- name: "Register installed paks var"
+  set_fact:
+    installed_paks: "{{installed_solutions|json_query(installed_state_query)}}"
+  vars:
+    installed_solutions: "{{node_state_response.json.solutions|from_json}}"
+    installed_state_query: "solution[*].[id, version]"
+  tags:
+    - vrops_solutions_detect
+    - vrops_solutions_from_files
+
+- name: "Register product_version var"
+  set_fact:
+    product_version: "{{node_state_response.json.product_version}}"
+  tags:
+    - vrops_solutions_detect
+    - vrops_solutions_from_files
+
+- name: Install Upgrade From File
+  shell: >
+         curl https://{{ vrops_nodes.master.ip_address }}/casa/upgrade/cluster/pak/reserved/operation/silent_install \
+         --noproxy {{ vrops_nodes.master.ip_address }} \
+         -s \
+         -S \
+         -k \
+         -u {{ default_admin_user }}:{{ svc_vrops_admin_password }} \
+         -X POST \
+         -H 'Content-Type: multipart/form-data' \
+         -F 'contents=@{{ upgrade.from_file }};type=multipart/form-data'
+  register: upgrade_response
+  when: upgrade.from_file != False and upgrade.version not in product_version
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_upgrade_from_files
+    - vrops_solutions_from_files
+
+- name: Wait for upgrade to be completed
+  upgrade_status:
+    response: "{{ upgrade_response.stdout | default(None) }}"
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+  when: not upgrade_response | skipped
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_upgrade_from_files
+    - vrops_solutions_from_files
+
+- name: Install Solution From File
+  shell: >
+         curl https://{{ vrops_nodes.master.ip_address }}/casa/upgrade/cluster/pak/reserved/operation/silent_install \
+         --noproxy {{ vrops_nodes.master.ip_address }} \
+         -s \
+         -S \
+         -k \
+         -u {{ default_admin_user }}:{{ svc_vrops_admin_password }} \
+         -X POST \
+         -H 'Content-Type: multipart/form-data' \
+         -F 'contents=@{{ item.value.from_file }};type=multipart/form-data'
+  # These flags will break things on purpose, use with care.
+  # -F 'pak_handling_advice=CLOBBER'
+  # -F 'force_content_update=true'
+  with_dict: "{{ solutions }}"
+  when: item.value.from_file != False and [item.value.id, item.value.version] not in installed_paks
+  no_log: "{{ enable_no_log }}"
+  changed_when: False
+  async: 3600
+  poll: 3
+  tags:
+    - vrops_solutions_from_files

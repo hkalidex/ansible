@@ -1,0 +1,295 @@
+---
+
+# Enterprise Cloud vRA Infrastructure http://wikiserver2.amr.corp.intel.com/dokuwiki-2012-01-25a/doku.php?id=enterprise_cloud_infrastructure&s[]=iaas
+# Design Cloud vRA Infrastructure http://wikiserver2.amr.corp.intel.com/dokuwiki-2012-01-25a/doku.php?id=designcloud_infrastructure_ec_vra&s[]=iaas
+
+vra_mgmt_vc:
+  mgmt01:
+    name: "fms01vcamgmt001.amr.corp.intel.com"
+    username: "{{ lookup('env', 'VCENTER_USERNAME' }}"
+    password: "{{ lookup('env', 'VCENTER_PASSWORD' }}"
+
+vra_environments:
+  enterprisecloud.intel.com:
+    # THIS SHOULD ALWAYS MATCH THE VALUE IN THE production-env.yml for the vra_adapters
+    vra_proxy_agents:
+      chpxy01:
+        name: "chs02vrapxy001.amr.corp.intel.com"
+        ip: "10.11.223.11"
+        vc: "azsvc001.amr.corp.intel.com"
+        type: "proxy"
+      chpxy02:
+        name: "chs02vrapxy002.amr.corp.intel.com"
+        ip: "10.11.223.12"
+        vc: "azsvc001.amr.corp.intel.com"
+        type: "proxy"
+      chpxy03:
+        name: "chs02vrapxy003.amr.corp.intel.com"
+        ip: "10.11.223.13"
+        vc: "azsvc001.amr.corp.intel.com"
+        type: "proxy"
+      chpxy04:
+        name: "chs02vrapxy004.amr.corp.intel.com"
+        ip: "10.11.223.14"
+        vc: "azsvc001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy01:
+        name: "hfs02vrapxy001.amr.corp.intel.com"
+        ip: "10.11.101.139"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy02:
+        name: "hfs02vrapxy002.amr.corp.intel.com"
+        ip: "10.11.101.140"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy03:
+        name: "hfs02vrapxy003.amr.corp.intel.com"
+        ip: "10.11.101.141"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy04:
+        name: "hfs02vrapxy004.amr.corp.intel.com"
+        ip: "10.11.101.142"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy05:
+        name: "hfs02vrapxy005.amr.corp.intel.com"
+        ip: "10.11.101.143"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy06:
+        name: "hfs02vrapxy006.amr.corp.intel.com"
+        ip: "10.11.101.144"
+        vc: "egs02vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy07:
+        name: "hfs02vrapxy007.amr.corp.intel.com"
+        ip: "10.11.101.145"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy08:
+        name: "hfs02vrapxy008.amr.corp.intel.com"
+        ip: "10.11.101.146"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy09:
+        name: "hfs02vrapxy009.amr.corp.intel.com"
+        ip: "10.11.101.147"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy10:
+        name: "hfs02vrapxy010.amr.corp.intel.com"
+        ip: "10.11.101.148"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy11:
+        name: "hfs02vrapxy011.amr.corp.intel.com"
+        ip: "10.11.101.149"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      hfpxy12:
+        name: "hfs02vrapxy012.amr.corp.intel.com"
+        ip: "10.11.101.150"
+        vc: "egs02vcaigbn002.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy01:
+        name: "fms01vrapxy001.amr.corp.intel.com"
+        ip: "10.18.216.140"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy02:
+        name: "fms01vrapxy002.amr.corp.intel.com"
+        ip: "10.18.216.141"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy03:
+        name: "fms01vrapxy003.amr.corp.intel.com"
+        ip: "10.18.216.142"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy04:
+        name: "fms01vrapxy004.amr.corp.intel.com"
+        ip: "10.18.216.143"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy05:
+        name: "fms01vrapxy005.amr.corp.intel.com"
+        ip: "10.18.216.144"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy06:
+        name: "fms01vrapxy006.amr.corp.intel.com"
+        ip: "10.18.216.145"
+        vc: "fms01vcaigbn001.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy07:
+        name: "fms02vrapxy007.amr.corp.intel.com"
+        ip: "10.18.216.146"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy08:
+        name: "fms02vrapxy008.amr.corp.intel.com"
+        ip: "10.18.216.147"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy09:
+        name: "fms02vrapxy009.amr.corp.intel.com"
+        ip: "10.18.216.148"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy10:
+        name: "fms02vrapxy010.amr.corp.intel.com"
+        ip: "10.18.216.149"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy11:
+        name: "fms02vrapxy011.amr.corp.intel.com"
+        ip: "10.18.216.150"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      fmpxy12:
+        name: "fms02vrapxy012.amr.corp.intel.com"
+        ip: "10.18.216.151"
+        vc: "fms01vcaigbn003.amr.corp.intel.com"
+        type: "proxy"
+      irpxy01:
+        name: "irs01vrapxy001.ger.corp.intel.com"
+        ip: "10.108.18.203"
+        vc: "irs05vcagpb0001.ger.corp.intel.com"
+        type: "proxy"
+      irpxy02:
+        name: "irs01vrapxy002.ger.corp.intel.com"
+        ip: "10.108.18.204"
+        vc: "irs05vcagpb0001.ger.corp.intel.com"
+        type: "proxy"
+      pgpxy01:
+        name: "pgs12vrapxy001.gar.corp.intel.com"
+        ip: "10.108.48.203"
+        vc: "pgs12vcagpb001.gar.corp.intel.com"
+        type: "proxy"
+      pgpxy02:
+        name: "pgs12vrapxy002.gar.corp.intel.com"
+        ip: "10.108.48.204"
+        vc: "pgs12vcagpb001.gar.corp.intel.com"
+        type: "proxy"
+      lcpxy01:
+        name: "lcs12vrapxy001.ger.corp.intel.com"
+        ip: "10.109.200.11"
+        vc: "LCS12VCAIGBN001.ger.corp.intel.com"
+        type: "proxy"
+      lcpxy02:
+        name: "lcs12vrapxy002.ger.corp.intel.com"
+        ip: "10.109.200.12"
+        vc: "LCS12VCAIGBN001.ger.corp.intel.com"
+        type: "proxy"
+      crpxy01:
+        name: "crs03vrapxy001.amr.corp.intel.com"
+        ip: "10.109.136.11"
+        vc: "crs03vcagpb0001.amr.corp.intel.com"
+        type: "proxy"
+      crpxy02:
+        name: "crs03vrapxy002.amr.corp.intel.com"
+        ip: "10.109.136.12"
+        vc: "crs03vcagpb0001.amr.corp.intel.com"
+        type: "proxy"
+      srrpxy01:
+        name: "srrs01vrapxy001.gar.corp.intel.com"
+        ip: "10.109.70.202"
+        vc: "srrs01vcagpb001.iind.intel.com"
+        type: "proxy"
+      srrpxy02:
+        name: "srrs01vrapxy002.gar.corp.intel.com"
+        ip: "10.109.70.203"
+        vc: "srrs01vcagpb001.iind.intel.com"
+        type: "proxy"
+      shzpxy01:
+        name: "shzs01vrapxy001.gar.corp.intel.com"
+        ip: "10.109.16.203"
+        vc: "shzs01vcagpb001.sh.intel.com"
+        type: "proxy"
+      shzpxy02:
+        name: "shzs01vrapxy002.gar.corp.intel.com"
+        ip: "10.109.16.204"
+        vc: "shzs01vcagpb001.sh.intel.com"
+        type: "proxy"
+
+    vra_app:
+      lb:
+        name: "enterprisecloud.intel.com"
+        ip: "10.18.214.28"
+        type: "load_balancer"
+      app01:
+        name: "fms01vraapp01.amr.corp.intel.com"
+        ip: "10.18.203.25"
+        type: "appliance"
+      app02:
+        name: "fms01vraapp02.amr.corp.intel.com"
+        ip: "10.18.203.26"
+        type: "appliance"
+
+    vra_vro:
+      lb:
+        name: "fms01vravro.icloud.intel.com"
+        ip: "10.18.214.29"
+        type: "load_balancer"
+      vro01:
+        name: "fms01iaas001.amr.corp.intel.com"
+        ip: "10.18.203.17"
+        type: "appliance"
+      vro02:
+        name: "fms01iaas002.amr.corp.intel.com"
+        ip: "10.18.203.18"
+        type: "appliance"
+
+    vra_iaas_web:
+      lb:
+        name: "fms01iaas.icloud.intel.com"
+        ip: "10.18.214.48"
+        type: "load_balancer"
+      iaasweb01:
+        name: "fms01iaas001.amr.corp.intel.com"
+        ip: "10.18.203.17"
+        type: "appliance"
+      iaasweb02:
+        name: "fms01iaas002.amr.corp.intel.com"
+        ip: "10.18.203.18"
+        type: "appliance"
+
+    vra_iaas_mgr:
+      lb:
+        name: "fms01iaasmgr.icloud.intel.com"
+        ip: "10.18.214.49"
+        type: "load_balancer"
+      iaasmgr01:
+        name: "fms01iaasmgr001.amr.corp.intel.com"
+        ip: "10.18.203.19"
+        type: "appliance"
+      iaasmgr02:
+        name: "fms01iaasmgr002.amr.corp.intel.com"
+        ip: "10.18.203.20"
+        type: "appliance"
+
+    vra_sql:
+      lb:
+        name: "fms01iaasdb.icloud.intel.com"
+        ip: "10.18.203.21"
+        type: "load_balancer"
+      sql01:
+        name: "fms01iaasdb001.amr.corp.intel.com"
+        ip: "10.18.203.21"
+        type: "appliance"
+      sql02:
+        name: "fms01iaasdb002.amr.corp.intel.com"
+        ip: "10.18.203.22"
+        type: "appliance"
+
+    vra_dem:
+      dem01:
+        name: "fms01vradmwk001.amr.corp.intel.com"
+        ip: "10.18.203.27"
+        type: "appliance"
+      dem02:
+        name: "fms01vradmwk002.amr.corp.intel.com"
+        ip: "10.18.203.28"
+        type: "appliance"

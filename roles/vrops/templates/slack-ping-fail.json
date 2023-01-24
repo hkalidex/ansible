@@ -1,0 +1,15 @@
+{
+    "text": "At least one of the following network prechecks failed before starting the {{ lookup('env','VROPS_ENV') }} environment build:",
+    "icon_emoji": ":japanese_goblin:",
+    "channel": "#vrops",
+    "username": "{{ lookup('env','VROPS_ENV') }} network prechecks",
+    "attachments": [{
+        "text": "VC Ping: {{ failed_pings_list|join(', ') }}"
+    }, {
+        "text": "VC Curl: {{ failed_curls_list|join(', ') }}"
+    }, {
+        "text": "vROps Node Names DNS Lookup Failures: {{ failed_dns_list|join(', ') }}"
+    }, {
+        "text": "Direct ESX Host Curl Failures (dependent on VC curl success): {{ failed_esx_curls_list|join(', ') }}"
+    }]
+}

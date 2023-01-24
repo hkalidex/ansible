@@ -1,0 +1,14 @@
+
+{
+  "replicaNode" : false,
+  "master_credentials" : {
+    "password" : "{{ svc_vrops_admin_password }}",
+    "address" : "{{ vrops_nodes.master.ip_address }}",
+    "otp" : null,
+    "thumbprint" : "{{ master_node_thumbprint }}"
+  },
+  "name" : "{{ item.value.name }}",
+  "ntp_servers" : ["{{ ntp_servers }}"],
+  "init" : false,
+  "dry-run" : false
+}

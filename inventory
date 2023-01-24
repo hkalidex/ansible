@@ -1,0 +1,70 @@
+[local]
+localhost ansible_connection=local
+
+[sandbox_vrops]
+sndbxvropsma01.icloud.intel.com ansible_host=10.4.76.150
+sndbxvropsda01.icloud.intel.com ansible_host=10.4.76.151
+sndbxvropsda02.icloud.intel.com ansible_host=10.4.76.152
+sndbxvropsrc01.icloud.intel.com ansible_host=10.4.76.153
+sndbxvropsrc02.icloud.intel.com ansible_host=10.4.76.154
+
+[integration_vrops]
+fm7intvromaster.fm.intel.com ansible_host=10.110.112.75
+fm7intvrodata01.fm.intel.com ansible_host=10.110.112.76
+fm7intvrodata02.fm.intel.com ansible_host=10.110.112.77
+fm7intvrodata03.fm.intel.com ansible_host=10.110.112.78
+fmsvchtz07col01.icloud.intel.com ansible_host=10.241.52.89
+fmsvcdmz07col01.icloud.intel.com ansible_host=10.232.69.212
+fms07vc01col01.icloud.intel.com ansible_host=10.110.111.190
+
+[production_vrops]
+analytics01.icloud.intel.com ansible_hosts=10.11.173.75
+analytics02.icloud.intel.com ansible_hosts=10.11.173.76
+analytics03.icloud.intel.com ansible_hosts=10.11.173.77
+analytics04.icloud.intel.com ansible_hosts=10.11.173.78
+analytics05.icloud.intel.com ansible_hosts=10.11.173.79
+analytics06.icloud.intel.com ansible_hosts=10.11.173.80
+analytics07.icloud.intel.com ansible_hosts=10.11.173.81
+analytics08.icloud.intel.com ansible_hosts=10.11.173.82
+analytics09.icloud.intel.com ansible_hosts=10.11.173.83
+# Office and Enterprise
+fms01vc01col01.icloud.intel.com ansible_hosts=10.18.216.170
+fms01vc03col01.icloud.intel.com ansible_hosts=10.18.216.139
+lcs12vc01col01.icloud.intel.com ansible_hosts=10.109.200.40
+egs02vc01col01.icloud.intel.com ansible_hosts=10.11.101.171
+egs02vc02col01.icloud.intel.com ansible_hosts=10.11.101.170
+pgs12vc01col01.icloud.intel.com ansible_hosts=10.108.48.230
+crs03vc01col01.icloud.intel.com ansible_hosts=10.109.136.40
+irs05vc01col01.icloud.intel.com ansible_hosts=10.108.18.230
+shzs01vc01col01.icloud.intel.com ansible_hosts=10.109.16.230
+azsvc01col01.icloud.intel.com ansible_hosts=10.11.223.40
+fmsvchtz01col01.icloud.intel.com ansible_hosts=10.18.111.182
+azsvchtz02col01.icloud.intel.com ansible_hosts=10.18.242.26
+fmsvcdmz01col01.icloud.intel.com ansible_hosts=10.18.81.102
+egsvcdmz02col01.icloud.intel.com ansible_hosts=10.9.195.28
+fmsvcdmz01col02.icloud.intel.com ansible_hosts=10.11.173.68
+irsvcdmz01col01.icloud.intel.com ansible_hosts=10.108.13.149
+pgsvcdmz12col01.icloud.intel.com ansible_hosts=10.108.41.18
+# Windows Design Hosting
+jf4vc01col02.icloud.intel.com ansible_hosts=10.38.74.4
+ch7vc01col02.icloud.intel.com ansible_hosts=143.182.228.4
+anvc01col01.icloud.intel.com ansible_hosts=10.123.34.131
+ba5vc01col01.icloud.intel.com ansible_hosts=10.223.207.4
+ch7vc01col01.icloud.intel.com ansible_hosts=143.182.228.5
+fm6vc01col01.icloud.intel.com ansible_hosts=10.96.9.8
+ba5vc01col02.icloud.intel.com ansible_hosts=10.223.207.3
+havc01col02.icloud.intel.com ansible_hosts=10.184.207.113
+hdvc01col01.icloud.intel.com ansible_hosts=10.127.203.43
+havc01col01.icloud.intel.com ansible_hosts=10.184.207.114
+imuvc01col01.icloud.intel.com ansible_hosts=10.216.160.4
+irvc01col01.icloud.intel.com ansible_hosts=163.33.26.28
+jf4vc01col01.icloud.intel.com ansible_hosts=10.38.74.5
+pg12vc01col01.icloud.intel.com ansible_hosts=10.221.176.4
+sc11vc01col01.icloud.intel.com ansible_hosts=10.82.195.75
+shvc01col01.icloud.intel.com ansible_hosts=10.239.30.9
+fmvc01col01.icloud.intel.com ansible_hosts=10.96.26.68
+hfvc01col01.icloud.intel.com ansible_hosts=10.39.133.4
+pgvc01col01.icloud.intel.com ansible_hosts=10.221.179.73
+idcvc01col01.icloud.intel.com ansible_hosts=10.184.67.142
+crvc01col01.icloud.intel.com ansible_hosts=172.18.67.139
+srrs01vc01col01.icloud.intel.com ansible_hosts=10.67.131.135

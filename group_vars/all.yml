@@ -1,0 +1,102 @@
+---
+# These are defaults! see env files for overide
+
+# This is where the UI installs the ovftool this by default
+vrops_ovftool: /usr/bin/ovftool
+
+# Intel STMP Server
+smtp_server: "smtp.intel.com"
+
+# Intel SMTP Server Port
+smtp_port: 25
+
+# The cloud health email PDL
+email_pdl: "cloud.infrastructure.health@intel.com"
+
+# The IP protocol version to support.
+vrops_ip_protocol: 'IPv4'
+
+# Where to place generated password (http) body files during play runs.
+adminpass_body_file: '/tmp/adminpass-body.json'
+
+# Where to place generated master config body files during play runs.
+master_config_file: '/tmp/master-config.json'
+
+# Where to place generated master config body files during play runs.
+data_config_file: '/tmp/data-config.json'
+
+# Space free required on the datastore to deploy nodes
+default_datastore_min_gb_threshold: 2
+
+# The default administrator user to setup during deployment.
+default_admin_user: 'admin'
+
+# The default root password to setup during deployment.
+svc_vrops_root_password: "{{ lookup('file', '/mnt/cifs/vrops/vrops_root_ssh_keypair/root_hash') }}"
+svc_vrops_root_pubkey: "{{ lookup('file', '/mnt/cifs/vrops/vrops_root_ssh_keypair/id_rsa.pub') }}"
+
+# The size option for the vrops nodes.
+vrops_deployment_option: large
+
+# The provisioning mode for the disk on installation.
+vrops_disk_mode: 'thin'
+
+domain_prefix: "AMR"
+
+proxy_chain: "http://proxy-chain.intel.com:911"
+
+vrops_init: False
+
+# This is the license key file
+license_keys_file_path: '/mnt/cifs/vrops/license_keys.json'
+
+# Value of resourceKindKey for sddc adapters
+sddc_adapter: "SDDCHealth Instance"
+
+# The are variables for configuring Active Directory
+auth_domain_name: "corp.intel.com"
+auth_source_type: "ACTIVE_DIRECTORY"
+auth_desc: "Intel Active Directory"
+auth_host: "fmsamr402.amr.corp.intel.com"
+auth_port: "3268"
+auth_base_domain: "dc=corp,dc=intel,dc=com"
+auth_common_name: "userPrincipalName"
+auth_group_search_criteria: '(|(objectClass=group)(objectClass=groupOfNames))'
+auth_member_attribute: "member"
+auth_user_search_criteria: ""
+auth_member_match_field: ""
+auth_ldap_context_attributes: ""
+
+# Allows the vropsova_deploy task errors to be ignored.
+ignore_ova_deploy_errors: "{{ lookup('env', 'IGNORE_OVA_DEPLOY_ERRORS') | bool | default(False) }}"
+
+# Controls the https.connect.timeout setting, which by default is 2000 ms in vROps, but we set it to something like 60000 ms.
+https_connect_timeout_ms: "60000"
+
+# Use this watchlist to protect or delete certain credential instances in vROps, like maintenanceAdmin.
+# See more info here: https://github.intel.com/HostingSDI/vrops-cicd/wiki/Credential-Automation,-Watchlist
+#
+# Context:
+#   Every time the automation is run, the vrops_patch_credentials tag attempts to do a "soft-delete"
+#   of any credentials that exist in vROps, but not in our env.yml's credential config.
+#   The soft-delete will not remove credentials that have dependent adapter instances/resources.
+#   So, even if the below maintenanceAdmin item is removed from the credential_watchlist,
+#   it will still remain in the environment because it has dependent adapters/resources.
+#
+# Usage:
+#   The default behavior for all credentials is "protect". Use the "purge_all" action to
+#   delete all credentials+adapters+resources, except explicitly protected ones like maintenanceAdmin below.
+#
+# Warning:
+#   If "purge" is set as the action for any credential (or purge_all is set), the vrops_credentials tag will be run.
+#   IT WILL DELETE ALL RESOURCES AND ADAPTER INSTANCES ASSOCIATED WITH THE CREDENTIAL BEFORE ALSO DELETING THE CREDENTIAL INSTANCE ITSELF!
+credential_watchlist:
+  # - action: purge_all  # BE CAREFUL!!! Use this to force the automation to delete everything, except for protected credentials. Doesn't require any other fields to be defined
+  - comment: maintenanceAdmin protected credential instance  # the value of this field can be whatever you want, it's not used in the code
+    keypairs:  # These are normal key/value pairs in the credential instance
+      adapterKindKey: "vCenter Operations Adapter"
+      credentialKindKey: "PRINCIPALCREDENTIAL"
+    fields:  # Credential instances have a "fields" dictionary that contains more keypairs with "name" and "value". You can only use name/value pairs.
+      - name: 'USER'
+        value: 'maintenanceAdmin'
+    action: protect  # can be "protect" or "purge"

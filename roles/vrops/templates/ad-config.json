@@ -1,0 +1,60 @@
+{
+  "name" : "{{ auth_domain_name }}",
+  "sourceType" : {
+    "id" : "{{ auth_source_type }}",
+    "name" : "{{ auth_source_type }}",
+    "description" : "{{ auth_desc }}",
+    "others" : [ ],
+    "otherAttributes" : {
+    }
+  },
+  "created" : "{{ ansible_date_time.epoch }}",
+  "lastModified" : "{{ ansible_date_time.epoch }}",
+  "others" : [ ],
+  "property" : [ {
+    "name" : "display-name",
+    "value" : "{{ auth_domain_name}}"
+  }, {
+    "name" : "host",
+    "value" : "{{ auth_host }}"
+  }, {
+    "name" : "use-ssl",
+    "value" : "false"
+  }, {
+    "name" : "base-domain",
+    "value" : "{{ auth_base_domain}}"
+  }, {
+    "name" : "user-name",
+    "value" : "{{ lookup('env', 'VCENTER_USERNAME') }}"
+  }, {
+    "name" : "password",
+    "value" : "{{ lookup('env', 'VCENTER_PASSWORD') }}"
+  }, {
+    "name" : "base-domain",
+    "value" : "{{ auth_base_domain }}"
+  }, {
+    "name" : "common-name",
+    "value" : "{{ auth_common_name }}"
+  }, {
+    "name" : "port",
+    "value" : "{{ auth_port }}"
+  }, {
+    "name" : "group-search-criteria",
+    "value" : "{{ auth_group_search_criteria }}"
+  }, {
+    "name" : "member-attribute",
+    "value" : "{{ auth_member_attribute}}"
+  }, {
+    "name" : "user-search-criteria",
+    "value" : "{{ auth_user_search_criteria}}"
+  }, {
+    "name" : "member-match-field",
+    "value" : "{{ auth_member_match_field }}"
+  }, {
+    "name" : "ldap-context-attributes",
+    "value" : "{{ auth_ldap_context_attributes }}"
+  } ],
+  "certificates" : [ ],
+  "otherAttributes" : {
+  }
+}

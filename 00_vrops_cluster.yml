@@ -1,0 +1,11 @@
+---
+
+- name: Deploy OVAs and config vROps
+  hosts: local
+  roles:
+    - vrops
+  vars_files:
+    - "vars/{{ lookup('env','VROPS_ENV') }}-env.yml"
+    - "vars/group-accounts.yml"
+    - "vars/sys-accounts.yml"
+    - "vars/{{ lookup('env', 'VROPS_ENV') }}-vrainfravms.yml"

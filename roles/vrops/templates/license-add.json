@@ -1,0 +1,5 @@
+{"solutionLicenses":[
+  {%- for item in licenses_to_delete_and_upload.msg.license_keys_to_upload -%}
+  {"id": null,"licenseKey": "{{ item }}","others": [],"otherAttributes":{}} 
+  {%- if not loop.last %},{%- endif -%}        
+  {%- endfor -%}]}

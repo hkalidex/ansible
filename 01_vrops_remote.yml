@@ -1,0 +1,11 @@
+---
+
+- name: Configure nodes via SSH
+  hosts: "{{ lookup('env','VROPS_ENV') }}_vrops"
+  gather_facts: no
+  tags:
+    - vrops_remote
+  roles:
+    - vrops_remote
+  vars_files:
+    - "vars/{{ lookup('env','VROPS_ENV') }}-env.yml"

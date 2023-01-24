@@ -1,0 +1,265 @@
+---
+
+enable_no_log: "{{ lookup('env', 'ENABLE_NO_LOG') | bool }}"
+
+ansible_python_interpreter: python  # https://stackoverflow.com/a/31192729
+
+mgmt_vc: "fms07vcamgmt001.amr.corp.intel.com"
+mgmt_vc_username: "{{ lookup('env','VCENTER_USERNAME') }}"
+mgmt_vc_password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+mgmt_vc_port: 443
+
+mgmt_vc_datacenter: "FM7-MGMT-101"
+mgmt_vc_cluster: "fm7-CloudMGMT-clu01"
+mgmt_datastore: "fm7-CloudMGMT-clu01 24B2 (2.124) 4TB 2"
+
+mgmt_network: "prod_v517_10.110.112.64-26"
+mgmt_netmask: 255.255.255.192
+mgmt_gateway: 10.110.112.65
+mgmt_dns: 10.248.2.1
+
+vrops_deployment_option: large
+vrops_ova_location: /mnt/cifs/vrops/6.6.1
+vrops_ova_name: vRealize-Operations-Manager-Appliance-6.6.1.6163035_OVF10.ova
+
+svc_vrops_admin_password: "{{ lookup('env','VROPS_ADMIN_PASSWORD_INTEGRATION') }}"
+
+ntp_servers: "10.18.116.209"
+
+pki_cert_pem: "{{ lookup('file', 'pki/integration/integration.pem') }}\n{{ lookup('file', '/mnt/cifs/vrops/pki/integration.key') }}\n{{ lookup('file', 'pki/sha2chain.pem') }}\n"
+
+upgrade:
+  version: "6.6.1.8317356"
+  from_file: /mnt/cifs/vrops/6.6.1/hotfixes/vRealize_Operations_Manager-VA-6.6.1.8317355.pak
+
+solutions:
+  epops:
+    id: "ep-ops-os-and-availability"
+    version: "1.0.6028692"
+    from_file: /mnt/cifs/vrops/6.6.1/vRealize_Operations_EPOps_Agent_Upgrade-6.6.1.6178617.pak
+    adapter_instances: False
+  vcenter:
+    from_file: False
+    adapter_instances:
+      # GitHub repo containing all VCs:
+      # https://github.intel.com/HostingSDI/vrops-vcenters/blob/master/oe-vcenters
+      # Internal
+      fms07vcaigbn001.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      fms7vcalabclh01.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # Build Automation VC
+      fms07vcalab002.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # Staging Management VC
+      fm07stgmgtvca1.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # SIZ
+      fms07vcamgmt001.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # SIZlab
+      fm07labmgtvca1.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      fm07labvca1.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      fm07labvca2.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      fm07labvca3.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      fm07labvca4.cps.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # DMZ
+      fms07vcacbs002.ed.cps.intel.com:
+        collector_group: FM7_DMZ
+        credential: ed-vc-account
+      # HTZ
+      fms07vcahtz002.ed.cps.intel.com:
+        collector_group: FM7_HTZ
+        credential: ed-vc-account
+  vrealize_automation:
+    from_file: False
+    adapter_instances:
+      fms07vranest08.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: fm7-vranest08-vra-account
+        tenant: "enterprise cloud"
+      enterprisecloud-int.intel.com:
+        collector_group: FM7_IGBN
+        credential: fm7-vra-integration-account
+        tenant: "enterprise cloud"
+  hpeoneview:
+    from_file: /mnt/cifs/vrops/packages/HPEOneViewAdapter-2.1.1.6_signed.pak
+    id: "HPOneviewAdapter"
+    version: "2.1.1.6"
+    adapter_instances:
+      fms07cbshpov01.cps.intel.com:
+        ip_address: 10.232.69.214
+        collector_group: FM7_DMZ
+        credential: int-amr-hpeoneview-account
+      fms07htzhpov01.cps.intel.com:
+        ip_address: 10.232.69.215
+        collector_group: FM7_HTZ
+        credential: int-amr-hpeoneview-account
+      fms07igbnhpov01.cps.intel.com:
+        ip_address: 10.232.69.213
+        collector_group: FM7_IGBN
+        credential: int-amr-hpeoneview-account
+      fms07hpeovlab01.fm.intel.com:
+        ip_address: 10.232.65.216
+        collector_group: FM7_IGBN
+        credential: int-amr-hpeoneview-account
+  sddc:
+    id: "SDDC Health"
+    version: "3.0.6074224"
+    from_file: /mnt/cifs/vrops/packages/vmware-MPforSDDCHealth-3.0-6074224.pak
+    adapter_instances: True
+  vrealize_business:
+    # TODO: This will be added in the following user story:
+    # https://rally1.rallydev.com/#/95416637724d/detail/userstory/155557980892
+    from_file: False
+    adapter_instances: False
+    # fms07vranest08.amr.corp.intel.com:
+    #   param1: asdf
+  loginsight:
+    adapter_instances:
+      fms01vrali001.amr.corp.intel.com:
+        collector_group: FM7_DMZ
+    from_file: False
+
+credentials:  # each of these will be created as a credential instance in vROps
+  - name: amr-vc-account
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+    type: vc
+  - name: ed-vc-account
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+    type: vc
+  - name: fm7-vranest08-vra-account
+    sysadmin_username: "{{ lookup('env','FM7_VRANEST08_SYSADMIN_USERNAME') }}"
+    sysadmin_password: "{{ lookup('env','FM7_VRANEST08_SYSADMIN_PASSWORD') }}"
+    superuser_username: "{{ lookup('env','FM7_VRANEST08_SUPERUSER_USERNAME') }}"
+    superuser_password: "{{ lookup('env','FM7_VRANEST08_SUPERUSER_PASSWORD') }}"
+    type: vra
+  - name: fm7-vra-integration-account
+    sysadmin_username: "{{ lookup('env','FM7_VRA_INTEGRATION_SYSADMIN_USERNAME') }}"
+    sysadmin_password: "{{ lookup('env','FM7_VRA_INTEGRATION_SYSADMIN_PASSWORD') }}"
+    superuser_username: "{{ lookup('env','FM7_VRA_INTEGRATION_SUPERUSER_USERNAME') }}"
+    superuser_password: "{{ lookup('env','FM7_VRA_INTEGRATION_SUPERUSER_PASSWORD') }}"
+    type: vra
+  - name: int-amr-hpeoneview-account
+    username: "{{ lookup('env', 'INT_AMR_HPONEVIEW_USERNAME') }}"
+    password: "{{ lookup('env', 'INT_AMR_HPONEVIEW_PASSWORD') }}"
+    vrops_username: "admin"
+    vrops_password: "{{ svc_vrops_admin_password }}"
+    directory: 'local'
+    type: hpeoneview
+
+vc_credentials:
+  amr:
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+  ed:
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+vrops_nodes:
+  master:
+    role: master
+    name: "fm7intvromaster"
+    fqdn: "fm7intvromaster.fm.intel.com"
+    vc: "fms07vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.110.112.75
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data01:
+    role: data
+    name: "fm7intvrodata01"
+    fqdn: "fm7intvrodata01.fm.intel.com"
+    vc: "fms07vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.110.112.76
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data02:
+    role: data
+    name: "fm7intvrodata02"
+    fqdn: "fm7intvrodata02.fm.intel.com"
+    vc: "fms07vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.110.112.77
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data03:
+    role: data
+    name: "fm7intvrodata03"
+    fqdn: "fm7intvrodata03.fm.intel.com"
+    vc: "fms07vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.110.112.78
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector01:
+    role: collector
+    deployment_size: largerc
+    name: "fmsvchtz07col01"
+    fqdn: "fmsvchtz07col01.icloud.intel.com"
+    ip_address: 10.241.52.89
+    netmask: 255.255.255.224
+    gateway: 10.241.52.65
+    dns: 10.248.2.9
+    vc: "fms07vcahtz002.ed.cps.intel.com"
+    vc_datacenter: "FM7-102 (High Trust Zone)"
+    vc_cluster: "fm7-nonprod-htz2-mgmt-clu01"
+    datastore: "fm7-htz1-nonprod-mgmt 8B8K (0.19) 4TB 0"
+    network: "v225c227_10.241.52.64-27_HTZ_NP_Prd_Mgmt_2w"
+    collector_group: FM7_HTZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector02:
+    role: collector
+    deployment_size: largerc
+    name: "fmsvcdmz07col01"
+    fqdn: "fmsvcdmz07col01.icloud.intel.com"
+    ip_address: 10.232.69.212
+    netmask: 255.255.255.192
+    gateway: 10.232.69.193
+    dns: 10.248.2.9
+    vc: "fm01prdmgtvca1.cps.intel.com"
+    vc_datacenter: "FM7-Mgmt"
+    vc_cluster: "fm7-mgmt-clu01"
+    datastore: "fm7-cbsi-mgmt 4882 (157) 500GB 2 TPF"
+    network: "v404c405_10.232.69.192-26_B_MGMT_Prod"
+    collector_group: FM7_DMZ
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector03:
+    role: collector
+    deployment_size: largerc
+    name: "fms07vc01col01"
+    fqdn: "fms07vc01col01.icloud.intel.com"
+    ip_address: 10.110.111.190
+    netmask: 255.255.255.128
+    gateway: 10.110.111.129
+    dns: 10.248.2.9
+    vc: "fms07vcamgmt001.amr.corp.intel.com"
+    vc_datacenter: "FM7-MGMT-101"
+    vc_cluster: "fm7-CloudMGMT-clu01"
+    datastore: "fm7-CloudMGMT-clu01 24B2 (2.124) 4TB 2"
+    network: "vra_rccp_v515_10.110.111.128-26"
+    collector_group: FM7_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"

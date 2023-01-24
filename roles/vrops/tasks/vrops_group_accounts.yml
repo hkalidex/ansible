@@ -1,0 +1,213 @@
+---
+
+- name: Get user groups
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/usergroups"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+  register: usergroups
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Set user group name list
+  set_fact:
+    usergroup_names: "{{ usergroups.json.userGroups | map(attribute='name') | list }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Get auth sources
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+  register: auth_sources
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Get Active Directory auth source
+  set_fact:
+    ad_auth_source: "{{ item.id }}"
+  when:
+    - item.name == "corp.intel.com"
+    - item.sourceType.name == "ACTIVE_DIRECTORY"
+  with_items: "{{ auth_sources.json.sources }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Fail if auth source missing
+  fail: msg="Auth source ACTIVE_DIRECTORY is missing"
+  when: ad_auth_source is undefined
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Add group access
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/usergroups"
+    body: "{{ lookup('template', 'import-ad-group.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200, 500
+  register: add_group_response
+  when: item.value.name not in usergroup_names
+  with_dict: "{{ group_accounts }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Get updated user group list
+  # Clean this up since it is exact rerun of earlier call, research how to do this
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/usergroups"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+  register: usergroups
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Update user group name list
+  set_fact:
+    usergroup_names: "{{ usergroups.json.userGroups | map(attribute='name') | list }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Confirm groups exist
+  register: groups_exist
+  fail: msg="Group {{ item.value.name }} was not added!"
+  when: item.value.name not in usergroup_names
+  with_dict: "{{ group_accounts }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Create group permissions hash
+  set_fact:
+    usergroup_roles: "{{ usergroup_roles | default({}) | combine( { item.name: item.roleNames  } ) }}"
+  with_items: "{{ usergroups.json.userGroups }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Create group id hash
+  set_fact:
+    usergroup_ids: "{{ usergroup_ids | default({}) | combine( { item.name: item.id  } ) }}"
+  with_items: "{{ usergroups.json.userGroups }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Add group account permissions
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/usergroups/{{ usergroup_ids[item.0.name] }}/permissions"
+    body: "{{ lookup('template', 'add-permission.json') }}"
+    body_format: json
+    method: PUT
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+    register: permissions_add_repsonse
+  when:
+    - item.0.name in usergroup_names
+    - item.1.roleName not in usergroup_roles[item.0.name]
+  with_subelements:
+    - "{{ group_accounts }}"
+    - permissions
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Set default approved group
+  set_fact:
+    approved_group_names: ['Everyone']
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Get approved groups array
+  set_fact:
+    approved_group_names: "{{ approved_group_names  + [ item.value.name ] }}"
+  with_dict: "{{ group_accounts }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_groups
+
+- name: Report unauthorized groups to email
+  mail:
+    host: "{{ smtp_server }}"
+    port: "{{ smtp_port }}"
+    subject: "Unauthorized group found on vROps instance {{ vrops_nodes.master.name }}"
+    to: "{{ email_pdl }}"
+    from: "donotreply@intel.com"
+    body: "{{ lookup('template', 'report-unathorized-groups.html') }}"
+    subtype: html
+  no_log: "{{ enable_no_log }}"
+  when:
+    - item.name not in approved_group_names
+  with_items: "{{ usergroups.json.userGroups }}"
+  tags:
+    - vrops_add_groups
+  environment:
+    - HTTP_PROXY: http://proxy-chain.intel.com:911
+    - HTTPS_PROXY: http://proxy-chain.intel.com:912
+
+# Commented out until: is fixed https://communities.vmware.com/message/2703491#2703491
+# - name: Remove groups not in config
+#  uri:
+#    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/usergroups/{{ item.id }}"
+#    method: DELETE
+#    user: "{{ default_admin_user }}"
+#    password: "{{ svc_vrops_admin_password }}"
+#    body: "{{ lookup('template', 'delete-ad-group.json') }}"
+#    body_format: json
+#    force_basic_auth: yes
+#    headers:
+#      Content-Type: "application/json;charset=UTF-8"
+#      Accept: "application/json;charset=UTF-8"
+#    validate_certs: no
+#    status_code: 204
+#    register: delete_repsonse
+#  when:
+#    - item.name not in approved_group_names
+#  with_items: "{{ usergroups.json.userGroups }}"
+#  no_log: "{{ enable_no_log }}"
+#  tags:
+#    - vrops_add_groups

@@ -1,0 +1,71 @@
+---
+
+# This task is primarily meant for debugging.
+# However it may be useful for bulk-removal of the casa-web.properties file in the future.
+# - name: (Skipping unless this is a destructive build) SSH to each node and remove the casa-web.properties file
+#   shell: >
+#          sshpass -p {{ ansible_ssh_pass }} ssh -T -o StrictHostKeyChecking=no root@{{ item.value.ip_address }}
+#          'rm -f /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties'
+#   register: rm_properties_file_result
+#   when:
+#     - item.value.role != 'vdp'  # leaving vdp role in for legacy compatibility as of US8051
+#     - THIS_IS_A_DESTRUCTIVE_BUILD
+#   delay: 10
+#   retries: 6
+#   async: 60
+#   poll: 1
+#   with_dict: "{{ vrops_nodes }}"
+#   no_log: "{{ enable_no_log }}"
+#   tags:
+#     - vrops_https_timeout_fix
+
+# Note: This is being bundled all in to a single Ansible task because it can greatly slow down our Ansible flow if we did a separate SSH task for every single minor task.
+# This task is intended to be non-destructive for vrops_nodes that already have the correct value for the HTTPS timeout fix implemented,
+# so there needs to be some basic logic. Read on to see implementation details.
+# This task behaves like this:
+# - SSH to the targeted vrops_node, sending in the following commands as a single long string:
+#   - set variable https_timeout_setting for reuise, to keep things clean
+#   - check if the casa-web.properties file is set properly by doing a diff
+#   - if the file /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties doesn't exist:
+#     - create the file with "https.connect.timeout = 60000" as its contents
+#     - restart the vmware-casa service
+#     - validate that the casa-web.properties file contains what we expect
+#     - validate that the service vmware-casa is running properly with a PID
+#   - regardless of if the file exists or not, the following is always run:
+#     - create the file with "https.connect.timeout = 60000" as its contents
+#     - validate that the casa-web.properties file contains what we expect
+# If any of the above steps fail, the task fails and the workflow ends here.
+# On average, it takes about 5-10 seconds for this task to run, for each node.
+# So a 30-node environment will take anywhere from 2.5-5 minutes, and a 5-node environment will take less than a minute.
+# Note: In the future this task may be done differently, but until then, this solution is sufficient.
+# Ideally, it would be done with the other tasks that actually use the built-in Ansible SSH functionality,
+# but unfortunately this task absolutely must be done at this step of the Ansible flow.
+
+- name: SSH to each node and set the timeout for HTTPS connections to 1 minute, restart CaSA Service, and validate results
+  shell: >
+         sshpass -p {{ ansible_ssh_pass }} ssh -i /mnt/cifs/vrops/vrops_root_ssh_keypair/id_rsa -T -o StrictHostKeyChecking=no root@{{ item.value.ip_address }}
+         'https_timeout_setting="https.connect.timeout = {{ https_connect_timeout_ms }}";
+         echo "$https_timeout_setting" > /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties.new &&
+         diff -q /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties.new;
+         if [ ! "$?" -eq "0" ]; then
+         echo "$https_timeout_setting" > /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties &&
+         service vmware-casa restart &&
+         grep "$https_timeout_setting" /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties &&
+         service vmware-casa status | grep "RUNNING as PID";
+         fi;
+         echo "$https_timeout_setting" > /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties &&
+         grep "$https_timeout_setting" /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties;
+         if [ ! "$?" -eq "0" ]; then
+         echo Failed to set /usr/lib/vmware-casa/casa-webapp/lib/casa-web.properties &&
+         exit 1;
+         fi;'
+  register: timeout_fix_result
+  when: item.value.role != 'vdp'  # leaving vdp role in for legacy compatibility as of US8051
+  delay: 10
+  retries: 6
+  async: 60
+  poll: 1
+  with_dict: "{{ vrops_nodes }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_https_timeout_fix

@@ -1,0 +1,90 @@
+---
+
+- name: Get users
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/users"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+  register: users
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Set username list
+  set_fact:
+    user_names: "{{ users.json.users | map(attribute='distinguishedName') | list }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Get auth sources
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 200
+  register: auth_sources
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Get Active Directory auth source
+  set_fact:
+    ad_auth_source: "{{ item.id }}"
+  when:
+    - item.name == "corp.intel.com"
+    - item.sourceType.name == "ACTIVE_DIRECTORY"
+  with_items: "{{ auth_sources.json.sources }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Fail if auth source missing
+  fail: msg="Auth source ACTIVE_DIRECTORY is missing"
+  when: ad_auth_source is undefined
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Update sys accounts to add
+  set_fact:
+    sysaccounts_to_add: "{{ sysaccounts_to_add | default({}) | combine({item.key: item.value}) }}"
+  when:
+    - item.value.dn not in user_names
+  with_dict: "{{ sys_accounts }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_add_sysaccounts
+
+- name: Add sys_account access
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources/{{ ad_auth_source }}/users"
+    body: "{{ lookup('template', 'import-ad-users.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    status_code: 201
+  register: add_sysaccounts_response
+  no_log: "{{ enable_no_log }}"
+  when: sysaccounts_to_add is not undefined
+  tags:
+    - vrops_add_sysaccounts

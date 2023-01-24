@@ -1,0 +1,1076 @@
+---
+
+enable_no_log: "{{ lookup('env', 'ENABLE_NO_LOG') | bool }}"
+
+ansible_python_interpreter: python  # https://stackoverflow.com/a/31192729
+
+mgmt_vc: "fms01vcamgmt001.amr.corp.intel.com"
+mgmt_vc_username: "{{ lookup('env','VCENTER_USERNAME') }}"
+mgmt_vc_password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+mgmt_vc_port: 443
+
+mgmt_vc_datacenter: "FM1-MGMT-101"
+mgmt_vc_cluster: "fm1-CloudMGMT-clu01"
+mgmt_datastore: "fm1-CloudMGMT-clu01 2JEW (108) 4TB 0"
+
+mgmt_network: "v3021_10.11.173.64_26_B_vROps"
+mgmt_netmask: 255.255.255.192
+mgmt_gateway: 10.11.173.65
+mgmt_dns: 10.248.2.9
+
+vrops_deployment_option: large
+vrops_ova_location: /mnt/cifs/vrops/6.6.1
+vrops_ova_name: vRealize-Operations-Manager-Appliance-6.6.1.6163035_OVF10.ova
+
+svc_vrops_admin_password: "{{ lookup('env','VROPS_ADMIN_PASSWORD_PRODUCTION') }}"
+
+ntp_servers: "corp.intel.com"
+
+pki_cert_pem: "{{ lookup('file', 'pki/production/production.pem') }}\n{{ lookup('file', '/mnt/cifs/vrops/pki/production.key') }}\n{{ lookup('file', 'pki/sha2chain.pem') }}\n"
+
+upgrade:
+  version: "6.6.1.8317356"
+  from_file: /mnt/cifs/vrops/6.6.1/hotfixes/vRealize_Operations_Manager-VA-6.6.1.8317355.pak
+
+solutions:
+  epops:
+    id: "ep-ops-os-and-availability"
+    version: "1.0.6028692"
+    from_file: /mnt/cifs/vrops/6.6.1/vRealize_Operations_EPOps_Agent_Upgrade-6.6.1.6178617.pak
+    adapter_instances: False
+  vcenter:
+    from_file: False
+    adapter_instances:
+      # GitHub repo containing all VCs:
+      # https://github.intel.com/HostingSDI/vrops-vcenters/blob/master/oe-vcenters
+      # Office and Enterprise VC
+      fms01vcaigbn001.amr.corp.intel.com:
+        collector_group: FM_IGBN
+        credential: amr-vc-account
+      azsvc001.amr.corp.intel.com:
+        collector_group: CH_IGBN
+        credential: amr-vc-account
+      # TODO: Fix Drone 172.17.0.0/16 subnet issues
+      # See issue #112
+      # Without this fixed, Drone will not automatically
+      # patch the SSL certificates for this adapter instance.
+      # It can be patched via a manual automation run,
+      # or just through the UI.
+      crs03vcagpb0001.amr.corp.intel.com:
+        collector_group: CR_IGBN
+        credential: amr-vc-account
+      lcs12vcaigbn001.ger.corp.intel.com:
+        collector_group: LC_IGBN
+        credential: amr-vc-account
+      egs02vcaigbn002.amr.corp.intel.com:
+        collector_group: HF_IGBN
+        credential: amr-vc-account
+      irs05vcagpb0001.ger.corp.intel.com:
+        collector_group: IR_IGBN
+        credential: amr-vc-account
+      pgs12vcagpb001.gar.corp.intel.com:
+        collector_group: PG_IGBN
+        credential: amr-vc-account
+      shzs01vcagpb001.sh.intel.com:
+        collector_group: SHZ_IGBN
+        credential: amr-vc-account
+      srrs01vcagpb001.iind.intel.com:
+        collector_group: PG_IGBN
+        credential: amr-vc-account
+      srr01dpvca1.iind.intel.com:
+        collector_group: SRR_WDH_IGBN
+        credential: amr-vc-account
+      irs01dpvca01.ger.corp.intel.com:
+        collector_group: IR_WDH_SIZ
+        credential: amr-vc-account
+      egs02vcaigbn001.amr.corp.intel.com:
+        collector_group: HF_IGBN
+        credential: amr-vc-account
+      fms01vcaigbn003.amr.corp.intel.com:
+        collector_group: FM_IGBN
+        credential: amr-vc-account
+      # Windows Design Hosting (EC) - IGBN
+      vcenter-ilab-amr-1.intel.com:
+        collector_group: 'HF_WDH_IGBN'
+        credential: amr-vc-account
+      vcenter-ilab-amr-2.intel.com:
+        collector_group: 'HF_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-an.intel.com:
+        collector_group: 'AN_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-ba.intel.com:
+        collector_group: 'BA_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-fm.intel.com:
+        collector_group: 'FM_WDH_IGBN'
+        credential: amr-vc-account
+      vcenter-ilab-gar-1.intel.com:
+        collector_group: 'BA_WDH_IGBN'
+        credential: amr-vc-account
+      vcenter-ilab-ger-1.intel.com:
+        collector_group: 'HA_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-hd.intel.com:
+        collector_group: 'HD_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-idc.intel.com:
+        collector_group: 'HA_WDH_IGBN'
+        credential: amr-vc-account
+      vcenter.imu.intel.com:
+        collector_group: 'MU_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-ir.intel.com:
+        collector_group: 'IR_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-pdx.intel.com:
+        collector_group: 'HF_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-pg.intel.com:
+        collector_group: 'PG_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-sc.intel.com:
+        collector_group: 'SC_WDH_IGBN'
+        credential: amr-vc-account
+      vsphere-sh.intel.com:
+        collector_group: 'SH_WDH_IGBN'
+        credential: amr-vc-account
+      lcs01dpvca01.ger.corp.intel.com:
+        collector_group: 'HA_WDH_IGBN'
+        credential: amr-vc-account
+      crs01dpvca01.amr.corp.intel.com:
+        collector_group: 'CR_WDH_IGBN'
+        credential: amr-vc-account
+      # DMZ VC
+      egs02vcacbs001.ed.cps.intel.com:
+        collector_group: HF_DMZ
+        credential: ed-vc-account
+      fm01prdmgtvca1.cps.intel.com:
+        collector_group: FM_DMZ
+        credential: amr-vc-account
+      fms01vcacbs001.ed.cps.intel.com:
+        collector_group: FM_DMZ
+        credential: ed-vc-account
+      fms01vcamgmt001.amr.corp.intel.com:
+        collector_group: FM_MGMT
+        credential: amr-vc-account
+      irs01vcacbs001.cps.intel.com:
+        collector_group: IR_DMZ
+        credential: ed-vc-account
+      pgs12vcacbs002.cps.intel.com:
+        collector_group: PG_DMZ
+        credential: ed-vc-account
+      # HTZ VC
+      azs02vcahtz001.cps.intel.com:
+        collector_group: CH_HTZ
+        credential: ed-vc-account
+      fms01vcahtz001.cps.intel.com:
+        collector_group: FM_HTZ
+        credential: ed-vc-account
+      # Windows Design Hosting (EC) - DMZ
+      fms01dpfmvca01.amr.corp.intel.com:
+        collector_group: FM_WDH_DMZ
+        credential: amr-vc-account
+      hfs02dphfvca01.amr.corp.intel.com:
+        collector_group: HF_WDH_DMZ
+        credential: amr-vc-account
+      pgs01dpvca01.gar.corp.intel.com:
+        # IMPORTANT: COLLECTOR IS ON IGBN NETWORK, VC IS ON DMZ NETWORK
+        collector_group: 'PG_WDH_DMZ'
+        credential: amr-vc-account
+      shz01dpvca1.sh.intel.com:
+        # IMPORTANT: COLLECTOR IS ON IGBN NETWORK, VC IS ON DMZ NETWORK
+        collector_group: 'PG_WDH_DMZ'
+        credential: amr-vc-account
+  vrealize_automation:
+    from_file: False
+    adapter_instances:
+      enterprisecloud.intel.com:
+        collector_group: FM_IGBN
+        credential: fm1-vra-account
+        tenant: "enterprise cloud"
+  sddc:
+    id: "SDDC Health"
+    version: "3.0.6074224"
+    from_file: /mnt/cifs/vrops/packages/vmware-MPforSDDCHealth-3.0-6074224.pak
+    adapter_instances: True
+  vrealize_business:
+    # TODO: This will be added in the following user story:
+    # https://rally1.rallydev.com/#/95416637724d/detail/userstory/155557980892
+    adapter_instances: False
+    from_file: False
+    # fms07vranest08.amr.corp.intel.com:
+    #   param1: asdf
+  hpeoneview:
+    from_file: /mnt/cifs/vrops/packages/HPEOneViewAdapter-2.1.1.6_signed.pak
+    id: "HPOneviewAdapter"
+    version: "2.1.1.6"
+    adapter_instances:
+      fms01cbshpov01.cps.intel.com:
+        ip_address: 10.18.81.111
+        collector_group: FM_DMZ
+        credential: prod-amr-hpeoneview-account
+      fms01htzhpov01.cps.intel.com:
+        ip_address: 10.18.81.112
+        collector_group: FM_HTZ
+        credential: prod-amr-hpeoneview-account
+      fms01igbnhpov01.cps.intel.com:
+        ip_address: 10.18.81.110
+        collector_group: FM_IGBN
+        credential: prod-amr-hpeoneview-account
+      hfs02cbshpov01.hf.intel.com:
+        ip_address: 10.9.195.37
+        collector_group: HF_DMZ
+        credential: prod-amr-hpeoneview-account
+      hfs02igbnhpov01.hf.intel.com:
+        ip_address: 10.9.195.35
+        collector_group: HF_IGBN
+        credential: prod-amr-hpeoneview-account
+      chs02htzhpov01.ch.intel.com:
+        ip_address: 10.18.242.15
+        collector_group: CH_HTZ
+        credential: prod-amr-hpeoneview-account
+      chs02igbnhpov01.ch.intel.com:
+        ip_address: 10.18.242.13
+        collector_group: CH_IGBN
+        credential: prod-amr-hpeoneview-account
+      irs01cbshpov01.ir.intel.com:
+        ip_address: 10.108.13.152
+        collector_group: IR_DMZ
+        credential: prod-amr-hpeoneview-account
+      irs01igbnhpov01.ir.intel.com:
+        ip_address: 10.108.13.150
+        collector_group: IR_IGBN
+        credential: prod-amr-hpeoneview-account
+      pgs12cbshpov01.png.intel.com:
+        ip_address: 10.108.41.22
+        collector_group: PG_DMZ
+        credential: prod-amr-hpeoneview-account
+      pgs12igbnhpov01.png.intel.com:
+        ip_address: 10.108.41.20
+        collector_group: PG_IGBN
+        credential: prod-amr-hpeoneview-account
+      crs03igbnhpov01.cr.intel.com:
+        ip_address: 10.109.136.13
+        collector_group: CR_IGBN
+        credential: prod-amr-hpeoneview-account
+      crs03igbnhpov02.cr.intel.com:
+        ip_address: 10.109.136.19
+        collector_group: CR_IGBN
+        credential: prod-amr-hpeoneview-account
+      lcs12igbnhpov01.lc.intel.com:
+        ip_address: 10.109.200.13
+        collector_group: LC_IGBN
+        credential: prod-amr-hpeoneview-account
+      srrs01igbnhpov01.iind.intel.com:
+        ip_address: 10.109.70.204
+        collector_group: PG_IGBN
+        credential: prod-amr-hpeoneview-account
+      shzs01igbnhpov01.sh.intel.com:
+        ip_address: 10.109.16.205
+        collector_group: SHZ_IGBN
+        credential: prod-amr-hpeoneview-account
+  loginsight:
+    adapter_instances:
+      fms01vrali001.amr.corp.intel.com:
+        collector_group: FM_DMZ
+    from_file: False
+
+credentials:  # each of these will be created as a credential instance in vROps
+  - name: amr-vc-account
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+    type: vc
+  - name: ed-vc-account
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+    type: vc
+  - name: fm1-vra-account
+    sysadmin_username: "{{ lookup('env','FM1_VRA_SYSADMIN_USERNAME') }}"
+    sysadmin_password: "{{ lookup('env','FM1_VRA_SYSADMIN_PASSWORD') }}"
+    superuser_username: "{{ lookup('env','FM1_VRA_SUPERUSER_USERNAME') }}"
+    superuser_password: "{{ lookup('env','FM1_VRA_SUPERUSER_PASSWORD') }}"
+    type: vra
+  - name: prod-amr-hpeoneview-account
+    username: "{{ lookup('env', 'PROD_AMR_HPONEVIEW_USERNAME') }}"
+    password: "{{ lookup('env', 'PROD_AMR_HPONEVIEW_PASSWORD') }}"
+    vrops_username: "admin"
+    vrops_password: "{{ svc_vrops_admin_password }}"
+    directory: 'local'
+    type: hpeoneview
+
+vc_credentials:
+  amr:
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+  ed:
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+vrops_nodes:
+  master:
+    role: master
+    name: "analytics01"
+    fqdn: "analytics01.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.75
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data01:
+    role: data
+    name: "analytics02"
+    fqdn: "analytics02.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.76
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data02:
+    role: data
+    name: "analytics03"
+    fqdn: "analytics03.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.77
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data03:
+    role: data
+    name: "analytics04"
+    fqdn: "analytics04.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.78
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data04:
+    role: data
+    name: "analytics05"
+    fqdn: "analytics05.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.79
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data05:
+    role: data
+    name: "analytics06"
+    fqdn: "analytics06.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.80
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data06:
+    role: data
+    name: "analytics07"
+    fqdn: "analytics07.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.81
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data07:
+    role: data
+    name: "analytics08"
+    fqdn: "analytics08.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.82
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data08:
+    role: data
+    name: "analytics09"
+    fqdn: "analytics09.icloud.intel.com"
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    ip_address: 10.11.173.83
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector01:
+    role: collector
+    deployment_size: largerc
+    name: "fms01vc01col01"
+    fqdn: "fms01vc01col01.icloud.intel.com"
+    ip_address: 10.18.216.170
+    netmask: 255.255.255.192
+    gateway: 10.18.216.129
+    dns: 10.248.2.9
+    vc: "fms01vcaigbn001.amr.corp.intel.com"
+    vc_datacenter: "FM1-102 (Folsom)"
+    vc_cluster: "fm1-prod-igbn-clu02"
+    datastore: "fm1-igbn-02 33WE (4.6) 8TB 4"
+    network: "vra_rccp_v434_10.18.216.128-26"
+    collector_group: FM_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector02:
+    role: collector
+    deployment_size: largerc
+    name: "fms01vc03col01"
+    fqdn: "fms01vc03col01.icloud.intel.com"
+    ip_address: 10.18.216.139
+    netmask: 255.255.255.192
+    gateway: 10.18.216.129
+    dns: 10.248.2.1
+    vc: "fms01vcaigbn003.amr.corp.intel.com"
+    vc_datacenter: "FM1-102 (Folsom)"
+    vc_cluster: "fm1-OCP-clu01"
+    datastore: "fm1-ocp-clu01 1319 (30) 8TB 12 TPF"
+    network: "vra_rccp_v434_10.18.216.128-26"
+    collector_group: FM_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector03:
+    role: collector
+    deployment_size: largerc
+    name: "lcs12vc01col01"
+    fqdn: "lcs12vc01col01.icloud.intel.com"
+    ip_address: 10.109.200.40
+    netmask: 255.255.255.192
+    gateway: 10.109.200.1
+    dns: 10.248.2.1
+    vc: "lcs12vcaigbn001.ger.corp.intel.com"
+    vc_datacenter: "LC12-101(Lachish)"
+    vc_cluster: "lc12-prod-igbn-clu01"
+    datastore: "lc12-prd-igbn 01 CVPN (12.28) 8TB 12"
+    network: "vra_rccp_v801_10.109.200.0-26"
+    collector_group: LC_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector04:
+    role: collector
+    deployment_size: largerc
+    name: "egs02vc01col01"
+    fqdn: "egs02vc01col01.icloud.intel.com"
+    ip_address: 10.11.101.171
+    netmask: 255.255.255.192
+    gateway: 10.11.101.129
+    dns: 10.248.2.9
+    vc: "egs02vcaigbn001.amr.corp.intel.com"
+    vc_datacenter: "EG2-102 (Evergreen)"
+    vc_cluster: "hf2-prod-igbn-clu02"
+    datastore: "hf2-prod-igbn-clu02 2NT2 (7.37) 8TB 7 TPF"
+    network: "vra_rccp_v423_10.11.101.128-26"
+    collector_group: HF_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector05:
+    role: collector
+    deployment_size: largerc
+    name: "egs02vc02col01"
+    fqdn: "egs02vc02col01.icloud.intel.com"
+    ip_address: 10.11.101.170
+    netmask: 255.255.255.192
+    gateway: 10.11.101.129
+    dns: 10.248.2.9
+    vc: "egs02vcaigbn002.amr.corp.intel.com"
+    vc_datacenter: "EG2-102 (Evergreen)"
+    vc_cluster: "eg2-OCP-clu01"
+    datastore: "hf2-OCP-CLU01 2NT2 (15.25) 8TB 14"
+    network: "vra_rccp_v423_10.11.101.128-26"
+    collector_group: HF_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector06:
+    role: collector
+    deployment_size: largerc
+    name: "pgs12vc01col01"
+    fqdn: "pgs12vc01col01.icloud.intel.com"
+    ip_address: 10.108.48.230
+    netmask: 255.255.255.192
+    gateway: 10.108.48.193
+    dns: 10.248.2.1
+    vc: "pgs12vcagpb001.gar.corp.intel.com"
+    vc_datacenter: "PGS12-201 (Penang)"
+    vc_cluster: "pgs12-prod-igbn-clu01"
+    datastore: "pgs12-prod-igbn YT36 (2.28) 4 TB 2"
+    network: "vrap_rccp_v220_10.108.48.192-26"
+    collector_group: PG_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector07:
+    role: collector
+    deployment_size: largerc
+    name: "irs05vc01col01"
+    fqdn: "irs05vc01col01.icloud.intel.com"
+    ip_address: 10.108.18.230
+    netmask: 255.255.255.192
+    gateway: 10.108.18.193
+    dns: 10.248.2.1
+    vc: "irs05vcagpb0001.ger.corp.intel.com"
+    vc_datacenter: "IR5-201 (Ireland)"
+    vc_cluster: "ir5-igbnprod-clu01"
+    datastore: "IR5_IGBNPROD_CLU01 4W8A (0.14) 4TB 0 TPF"
+    network: "vra_rccp_v383_10.108.18.192-26"
+    collector_group: IR_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector08:
+    role: collector
+    deployment_size: largerc
+    name: "crs03vc01col01"
+    fqdn: "crs03vc01col01.icloud.intel.com"
+    ip_address: 10.109.136.40
+    netmask: 255.255.255.192
+    gateway: 10.109.136.1
+    dns: 10.248.2.1
+    vc: "crs03vcagpb0001.amr.corp.intel.com"
+    vc_datacenter: "CR03-DC101 (Costa Rica)"
+    vc_cluster: "cr03-prod-igbn-clu03"
+    datastore: "cr03-prod-igbn-clu03 8565 (1) 4TB 0 TPF"
+    network: "vra_rccp_v317_10.109.136.0-26"
+    collector_group: CR_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+    drone_skip: True  # TODO: see #112
+
+  collector09:
+    role: collector
+    deployment_size: largerc
+    name: "shzs01vc01col01"
+    fqdn: "shzs01vc01col01.icloud.intel.com"
+    ip_address: 10.109.16.230
+    netmask: 255.255.255.192
+    gateway: 10.109.16.193
+    dns: 10.248.2.5
+    vc: "shzs01vcagpb001.sh.intel.com"
+    vc_datacenter: "SHZ1-DC101 (Zizhu)"
+    vc_cluster: "shz1-prod-igbn-clu01"
+    datastore: "shzs-nonprod-gpb 0037 (144) 4TB 54 TPF"
+    network: "vra_rccp_v330_10.109.16.192-26"
+    collector_group: SHZ_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector10:
+    role: collector
+    deployment_size: largerc
+    name: "azsvc01col01"
+    fqdn: "azsvc01col01.icloud.intel.com"
+    ip_address: 10.11.223.40
+    netmask: 255.255.255.192
+    gateway: 10.11.223.1
+    dns: 10.248.2.1
+    vc: "azsvc001.amr.corp.intel.com"
+    vc_datacenter: "CH2-101 (Chandler)"
+    vc_cluster: "ch2-prod-igbn-clu01"
+    datastore: "ch2-prd-igbn-01 2C7F (5.13) 8TB 5"
+    network: "vra_rccp_v230_10.11.223.0-26"
+    collector_group: CH_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector11:
+    role: collector
+    deployment_size: largerc
+    name: "fmsvchtz01col01"
+    fqdn: "fmsvchtz01col01.icloud.intel.com"
+    ip_address: 10.18.111.182
+    netmask: 255.255.255.224
+    gateway: 10.18.111.161
+    dns: 10.248.2.9
+    vc: "fms01vcahtz001.cps.intel.com"
+    vc_datacenter: "FM1-101 (High Trust Zone)"
+    vc_cluster: "fm1-prod-htz1-mgmt-clu01"
+    datastore: "fm1-htz1-cbsi-mgmt 1508 (69) 2TB 2TPF"
+    network: "v690c692_10.18.111.160-27_B_Prd_Mgmt_Com"
+    collector_group: FM_HTZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector12:
+    role: collector
+    deployment_size: largerc
+    name: "azsvchtz02col01"
+    fqdn: "azsvchtz02col01.icloud.intel.com"
+    ip_address: 10.18.242.26
+    netmask: 255.255.255.224
+    gateway: 10.18.242.1
+    dns: 10.248.2.9
+    vc: "azs02vcahtz001.cps.intel.com"
+    vc_datacenter: "CH2-102 (High Trust Zone)"
+    vc_cluster: "ch2-prod-htz1-mgmt-clu01"
+    datastore: "ch2-htz1-cbss-mgmt 2C7F (1.32) 1TB 1"
+    network: "v816c818_10.18.242.0-27_HTZ_DR_Prd_Mgmt_2w"
+    collector_group: CH_HTZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector13:
+    role: collector
+    deployment_size: largerc
+    name: "fmsvcdmz01col01"
+    fqdn: "fmsvcdmz01col01.icloud.intel.com"
+    ip_address: 10.18.81.102
+    netmask: 255.255.255.192
+    gateway: 10.18.81.65
+    dns: 10.248.2.9
+    vc: "fm01prdmgtvca1.cps.intel.com"
+    vc_datacenter: "FM1-Mgmt"
+    vc_cluster: "fm1-mgmt-clu01"
+    datastore: "fm1-cbsi-mgmt 2CAF (1.57) 1TB 1"
+    network: "10.18.81.64-26_B_MGMT_Prod"
+    collector_group: FM_DMZ
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector14:
+    role: collector
+    deployment_size: largerc
+    name: "egsvcdmz02col01"
+    fqdn: "egsvcdmz02col01.icloud.intel.com"
+    ip_address: 10.9.195.28
+    netmask: 255.255.255.192
+    gateway: 10.9.195.1
+    dns: 10.248.2.9
+    vc: "egs02vcacbs001.ed.cps.intel.com"
+    vc_datacenter: "EG2-101 (Enclave)"
+    vc_cluster: "hf2-prod-coreb-mgmt-clu01"
+    datastore: "hf2-cbsi-mgmt 6903 (15) 1TB 1 1TB TPF"
+    network: "10.9.195.0-26_B_MGMT_Prod"
+    collector_group: HF_DMZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector15:
+    role: collector
+    deployment_size: largerc
+    name: "fmsvcdmz01col02"
+    fqdn: "fmsvcdmz01col02.icloud.intel.com"
+    ip_address: 10.11.173.68
+    netmask: 255.255.255.192
+    gateway: 10.11.173.65
+    dns: 10.248.2.9
+    vc: "fms01vcamgmt001.amr.corp.intel.com"
+    vc_datacenter: "FM1-MGMT-101"
+    vc_cluster: "fm1-CloudMGMT-clu01"
+    datastore: "fm1-CloudMGMT-clu01 2JEW (112) 4TB 4"
+    network: "v3021_10.11.173.64_26_B_vROps"
+    collector_group: FM_MGMT
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector16:
+    role: collector
+    deployment_size: largerc
+    name: "irsvcdmz01col01"
+    fqdn: "irsvcdmz01col01.icloud.intel.com"
+    ip_address: 10.108.13.149
+    netmask: 255.255.255.128
+    gateway: 10.108.13.129
+    dns: 10.248.2.9
+    vc: "irs01vcacbs001.cps.intel.com"
+    vc_datacenter: "IR1-GD(Enclave)"
+    vc_cluster: "IR1-prod-coreb-mgmt-clu01"
+    datastore: "ir1-prod-dmz-mgmt 4W8A  (0.70) 4TB 0 TPF"
+    network: "v324c334_10.108.13.128-25_B_MGMT"
+    collector_group: IR_DMZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector17:
+    role: collector
+    deployment_size: largerc
+    name: "pgsvcdmz12col01"
+    fqdn: "pgsvcdmz12col01.icloud.intel.com"
+    ip_address: 10.108.41.18
+    netmask: 255.255.255.128
+    gateway: 10.108.41.1
+    dns: 10.248.2.9
+    vc: "pgs12vcacbs002.cps.intel.com"
+    vc_datacenter: "PG12-201(Enclave)"
+    vc_cluster: "pg12-prod-coreb-mgmt-clu01"
+    datastore: "pg12-prodcorebmgt-clu01 YT36 (1.114) 2TB 1"
+    network: "v326c340_10.108.41.0-25_B_MGMT"
+    collector_group: PG_DMZ
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+
+  collector18:
+    role: collector
+    deployment_size: largerc
+    name: 'jf4vc01col02'
+    fqdn: 'jf4vc01col02.icloud.intel.com'
+    ip_address: '10.38.74.4'
+    netmask: '255.255.255.0'
+    gateway: '10.38.74.1'
+    dns: '10.248.2.1'
+    vc: 'vsphere-pdx.intel.com'
+    vc_datacenter: 'PDX'
+    vc_cluster: '02-PDX_BL460Gen9_Broadwell-SVE'
+    datastore: '02-PDX_BL460Gen9_Broadwell-SVE-SAN-1'
+    network: 'linux_prod_v1074_10.38.74.0-24'
+    collector_group: 'HF_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector20:
+    role: collector
+    deployment_size: largerc
+    name: 'anvc01col01'
+    fqdn: 'anvc01col01.icloud.intel.com'
+    ip_address: '10.123.34.131'
+    netmask: '255.255.255.0'
+    gateway: '10.123.34.251'
+    dns: '10.248.2.1'
+    vc: 'vsphere-an.intel.com'
+    vc_datacenter: 'AN'
+    vc_cluster: 'an-prod-design-c3edr01/02'
+    datastore: 'needs-conf-review-Linux-ESXi-Infra1_VNX5400-8TB'
+    network: 'linux_prod_v34_10.123.34.0-24'
+    collector_group: 'AN_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector21:
+    role: collector
+    deployment_size: largerc
+    name: 'ba5vc01col01'
+    fqdn: 'ba5vc01col01.icloud.intel.com'
+    ip_address: '10.223.207.4'
+    netmask: '255.255.255.0'
+    gateway: '10.223.207.251'
+    dns: '10.248.2.1'
+    vc: 'vsphere-ba.intel.com'
+    vc_datacenter: 'BA-Linux'
+    vc_cluster: '03-BA-PROD-SSR1-DL360-GEN9'
+    datastore: 'BA-PROD-SRR1-DLCluster03'
+    network: 'linux_prod_v207_10.223.207.0-24'
+    collector_group: 'BA_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector23:
+    role: collector
+    deployment_size: largerc
+    name: 'fm6vc01col01'
+    fqdn: 'fm6vc01col01.icloud.intel.com'
+    ip_address: '10.96.9.8'
+    netmask: '255.255.255.0'
+    gateway: '10.96.9.251'
+    dns: '10.19.1.12'
+    vc: 'vsphere-pdx.intel.com'
+    vc_datacenter: 'FM'
+    vc_cluster: 'fm-prod-design-erd19-edr20-DL360'
+    datastore: 'FM_SAN-DL360Gen9_Broadwell-IT_EC-1'
+    network: 'linux_prod_v9_10.96.9.0-24'
+    collector_group: 'FM_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector24:
+    role: collector
+    deployment_size: largerc
+    name: 'ba5vc01col02'
+    fqdn: 'ba5vc01col02.icloud.intel.com'
+    ip_address: '10.223.207.3'
+    netmask: '255.255.255.0'
+    gateway: '10.223.207.251'
+    dns: '10.248.2.1'
+    vc: 'vsphere-ba.intel.com'
+    vc_datacenter: 'BA-Linux'
+    vc_cluster: '03-BA-PROD-SSR1-DL360-GEN9'
+    datastore: 'BA-PROD-SRR1-DLCluster03'
+    network: 'linux_prod_v207_10.223.207.0-24'
+    collector_group: 'BA_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector25:
+    role: collector
+    deployment_size: largerc
+    name: 'havc01col02'
+    fqdn: 'havc01col02.icloud.intel.com'
+    ip_address: '10.184.207.113'
+    netmask: '255.255.255.0'
+    gateway: '10.184.207.254'
+    dns: '10.184.9.9'
+    vc: 'vsphere-idc.intel.com'
+    vc_datacenter: 'IDC'
+    vc_cluster: '01-IDC-PROD-GEN9'
+    datastore: 'needs-conf-review-datastore22'
+    network: 'linux_prod_v207_10.184.207.0-24'
+    collector_group: 'HA_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector26:
+    role: collector
+    deployment_size: largerc
+    name: 'hdvc01col01'
+    fqdn: 'hdvc01col01.icloud.intel.com'
+    ip_address: '10.127.203.43'
+    netmask: '255.255.255.0'
+    gateway: '10.127.203.1'
+    dns: '10.248.2.1'
+    vc: 'vsphere-hd.intel.com'
+    vc_datacenter: 'HD'
+    vc_cluster: '01-HD_PROD_BL460cG7'
+    datastore: 'EC SAN 3'
+    network: 'linux_prod_v203_10.127.203.0-24'
+    collector_group: 'HD_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector27:
+    role: collector
+    deployment_size: largerc
+    name: 'havc01col01'
+    fqdn: 'havc01col01.icloud.intel.com'
+    ip_address: '10.184.207.114'
+    netmask: '255.255.255.0'
+    gateway: '10.184.207.254'
+    dns: '10.184.9.9'
+    vc: 'vsphere-idc.intel.com'
+    vc_datacenter: 'IDC'
+    vc_cluster: '01-IDC-PROD-GEN9'
+    datastore: 'needs-conf-review-datastore22'
+    network: 'linux_prod_v207_10.184.207.0-24'
+    collector_group: 'HA_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector28:
+    role: collector
+    deployment_size: largerc
+    name: 'imuvc01col01'
+    fqdn: 'imuvc01col01.icloud.intel.com'
+    ip_address: '10.216.160.4'
+    netmask: '255.255.255.0'
+    gateway: '10.216.160.1'
+    dns: '10.248.2.1'
+    vc: 'vcenter.imu.intel.com'
+    vc_datacenter: 'IMU'
+    vc_cluster: 'musvmHAclus001'
+    datastore: 'lun502'
+    network: 'V1460-DCESRV-WN'
+    collector_group: 'MU_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector29:
+    role: collector
+    deployment_size: largerc
+    name: 'irvc01col01'
+    fqdn: 'irvc01col01.icloud.intel.com'
+    ip_address: '163.33.26.28'
+    netmask: '255.255.255.0'
+    gateway: '163.33.26.1'
+    dns: '10.248.2.1'
+    vc: 'vsphere-ir.intel.com'
+    vc_datacenter: 'IR'
+    vc_cluster: 'IR-PROD-CORE-01'
+    datastore: 'IR-core-storage'
+    network: 'NET-163_33_26_0-24-VLAN0026-IR-CORE'
+    collector_group: 'IR_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector30:
+    role: collector
+    deployment_size: largerc
+    name: 'jf4vc01col01'
+    fqdn: 'jf4vc01col01.icloud.intel.com'
+    ip_address: '10.38.74.5'
+    netmask: '255.255.255.0'
+    gateway: '10.38.74.1'
+    dns: '10.248.2.1'
+    vc: 'vsphere-pdx.intel.com'
+    vc_datacenter: 'PDX'
+    vc_cluster: '02-PDX_BL460Gen9_Broadwell-SVE'
+    datastore: '02-PDX_BL460Gen9_Broadwell-SVE-SAN-1'
+    network: 'linux_prod_v1074_10.38.74.0-24'
+    collector_group: 'HF_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector31:
+    role: collector
+    deployment_size: largerc
+    name: 'pg12vc01col01'
+    fqdn: 'pg12vc01col01.icloud.intel.com'
+    ip_address: '10.221.176.4'
+    netmask: '255.255.255.0'
+    gateway: '10.221.176.251'
+    dns: '10.248.2.1'
+    vc: 'vsphere-pg.intel.com'
+    vc_datacenter: 'PG'
+    vc_cluster: '01-PG-PROD-2017-DL360C-GEN9'
+    datastore: 'needs-conf-review-Penang HA 2017 DS'
+    network: 'linux_prod_v176_10.221.176.0-24'
+    collector_group: 'PG_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector32:
+    role: collector
+    deployment_size: largerc
+    name: 'sc11vc01col01'
+    fqdn: 'sc11vc01col01.icloud.intel.com'
+    ip_address: '10.82.195.75'
+    netmask: '255.255.255.0'
+    gateway: '10.82.195.252'
+    dns: '10.248.2.1'
+    vc: 'vsphere-sc.intel.com'
+    vc_datacenter: 'SC'
+    vc_cluster: '02-SC_BL460cGen8-Design'
+    datastore: 'VNX75_V04'
+    network: 'linux_prod_v195_10.82.195.0-24'
+    collector_group: 'SC_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector33:
+    role: collector
+    deployment_size: largerc
+    name: 'shvc01col01'
+    fqdn: 'shvc01col01.icloud.intel.com'
+    ip_address: '10.239.30.9'
+    netmask: '255.255.255.0'
+    gateway: '10.239.30.241'
+    dns: '10.248.2.5'
+    vc: 'vsphere-sh.intel.com'
+    vc_datacenter: 'SH'
+    vc_cluster: 'sh-prod-design-edr01-02'
+    datastore: 'needs-conf-review-shcfs01n02b-03:sh_shec_vm016'
+    network: 'prod_v30_10.239.30.0-24'
+    collector_group: 'SH_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector34:
+    role: collector
+    deployment_size: largerc
+    name: 'fmvc01col01'
+    fqdn: 'fmvc01col01.icloud.intel.com'
+    ip_address: '10.96.26.68'
+    netmask: '255.255.255.192'
+    gateway: '10.96.26.65'
+    dns: '10.248.2.1'
+    vc: 'fms01dpfmvca01.amr.corp.intel.com'
+    vc_datacenter: 'FM'
+    vc_cluster: 'fm-prod-design-clu01'
+    datastore: 'fm_SAN-BL460cGen9_design-clu01-0'
+    network: 'rccp_v2026_10.96.26.64-26'
+    collector_group: 'FM_WDH_DMZ'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector35:
+    role: collector
+    deployment_size: largerc
+    name: 'hfvc01col01'
+    fqdn: 'hfvc01col01.icloud.intel.com'
+    ip_address: '10.39.133.4'
+    netmask: '255.255.255.192'
+    gateway: '10.39.133.1'
+    dns: '10.248.2.1'
+    vc: 'hfs02dphfvca01.amr.corp.intel.com'
+    vc_datacenter: 'PDX'
+    vc_cluster: 'pdx-prod-design-clu01'
+    datastore: 'pdx-prod-design-clu01 3934 (0) 4 TB'
+    network: 'rccp_v1433_10.39.133.0-26'
+    collector_group: 'HF_WDH_DMZ'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector36:
+    role: collector
+    deployment_size: largerc
+    name: 'pgvc01col01'
+    fqdn: 'pgvc01col01.icloud.intel.com'
+    ip_address: '10.221.179.73'
+    netmask: '255.255.255.192'
+    gateway: '10.221.179.65'
+    dns: '10.248.2.1'
+    vc: 'pgs01dpvca01.gar.corp.intel.com'
+    vc_datacenter: 'PG'
+    vc_cluster: 'pg-prod-design-clu01'
+    datastore: 'pg-prod-design-clu01 9772 ( 0.85) 4TB 0'
+    network: 'rccp_v1791_10.221.179.64-26'
+    collector_group: 'PG_WDH_DMZ'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector37:
+    role: collector
+    deployment_size: largerc
+    name: 'crvc01col01'
+    fqdn: 'crvc01col01.icloud.intel.com'
+    ip_address: '172.18.67.139'
+    netmask: '255.255.255.192'
+    gateway: '172.18.67.129'
+    dns: '10.248.2.1'
+    vc: 'crs01dpvca01.amr.corp.intel.com'
+    vc_datacenter: 'CR'
+    vc_cluster: 'cr-prod-design-clu01'
+    datastore: 'cr-prod-design-clu01 0 (0) 1TB'
+    network: 'vra_rccp_v567_172.18.67.128-26'
+    collector_group: 'CR_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+    drone_skip: True  # TODO: see #112
+
+  collector38:
+    role: collector
+    deployment_size: largerc
+    name: 'idcvc01col01'
+    fqdn: 'idcvc01col01.icloud.intel.com'
+    ip_address: '10.184.67.142'
+    netmask: '255.255.255.192'
+    gateway: '10.184.67.190'
+    dns: '10.248.2.1'
+    vc: 'lcs01dpvca01.ger.corp.intel.com'
+    vc_datacenter: 'IDC'
+    vc_cluster: 'idc-prod-design-clu01'
+    datastore: 'idc-prod-design-clu01 D2F3 (143) 4TB 0 TPF'
+    network: 'rccp_v491_10.184.67.128_26'
+    collector_group: 'HA_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector39:
+    role: collector
+    deployment_size: largerc
+    name: 'srrs01vc01col01'
+    fqdn: 'srrs01vc01col01.icloud.intel.com'
+    ip_address: '10.67.131.135'
+    netmask: '255.255.255.192'
+    gateway: '10.67.131.129'
+    dns: '10.248.2.1'
+    vc: 'srr01dpvca1.iind.intel.com'
+    vc_datacenter: 'SRR1-DCG01'
+    vc_cluster: 'srr-prod-design-clu01'
+    datastore: 'srr-prod-design-sclu01'
+    network: 'rccp_v141_10.67.131.128-26'
+    collector_group: 'SRR_WDH_IGBN'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'
+
+  collector40:
+    role: collector
+    deployment_size: largerc
+    name: 'irvc01col02'
+    fqdn: 'irvc01col02.icloud.intel.com'
+    ip_address: '10.216.167.140'
+    netmask: '255.255.255.192'
+    gateway: '10.216.167.129'
+    dns: '10.248.2.1'
+    vc: 'irs01dpvca01.ger.corp.intel.com'
+    vc_datacenter: 'IMU'
+    vc_cluster: 'imu-prod-design-clu01'
+    datastore: 'imu_prod_design_clu01_001A (39) 4TB 1'
+    network: 'v1671_10.216.167.128-26_RCCP'
+    collector_group: 'IR_WDH_SIZ'
+    username: '{{ lookup("env","VCENTER_USERNAME") }}'
+    password: '{{ lookup("env","VCENTER_PASSWORD") }}'

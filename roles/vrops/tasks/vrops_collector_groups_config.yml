@@ -1,0 +1,89 @@
+---
+
+- name: Get Existing Collector Groups
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectorgroups
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+  register: pre_existing_collector_groups
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_groups_config
+
+- name: Delete Existing Collector Groups
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectorgroups/{{ item.id }}
+    method: DELETE
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 204
+  register: existing_collector_groups
+  with_items: "{{ pre_existing_collector_groups.json.collectorGroups }}"
+  when: item.name != 'Default collector group' and item.collectorId|length == 0
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_groups_config
+
+- name: Get Collectors from API
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectors
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+  register: existing_collectors
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_groups_config
+
+- name: Process and Prepare Collector Groups from Environment and API Results
+  determine_collector_groups:
+    vrops_nodes: "{{ vrops_nodes }}"
+    vrops_collectors_from_api: "{{ existing_collectors.json.collector }}"
+  register: new_collector_groups_to_be_created
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_groups_config
+
+- name: Create Collector Groups
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectorgroups
+    method: POST
+    body: "{{ item }}"
+    body_format: json
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    return_content: yes
+    timeout: 3600
+    status_code: 201,500
+  register: create_collector_groups_results
+  failed_when: "create_collector_groups_results.status == 500 and 'already exists' not in create_collector_groups_results.content"
+  with_items: "{{ new_collector_groups_to_be_created.msg }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_groups_config

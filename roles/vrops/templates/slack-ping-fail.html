@@ -1,0 +1,9 @@
+<html></body>
+    <p>At least one of the following network prechecks failed before starting the {{ lookup('env','VROPS_ENV') }} environment build</p>
+    <ul>
+        <li><b>VC Ping</b>: {{ failed_pings_list|join(', ') }}</li>
+        <li><b>VC Curl:</b> {{ failed_curls_list|join(', ') }}</li>
+        <li><b>vROps Node Names DNS Lookup Failures</b>: {{ failed_dns_list|join(', ') }}</li>
+        <li><b>Direct ESX Host Curl Failures (dependent on VC curl success):</b> {{ failed_esx_curls_list|join(', ') }}</li>
+    </ul>
+</body></html>

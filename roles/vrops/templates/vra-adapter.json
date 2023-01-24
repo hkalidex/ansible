@@ -1,0 +1,27 @@
+{
+  "name": "{{ item.name }}",
+  "description": "{{ item.name }} {{ item.type }} adapter instance",
+  "collectorGroupId": "{{ item.collector_group_id }}",
+  "adapterKindKey": "VCACAdapter",
+  "resourceIdentifiers": [{
+    "name": "SUPPORT_AUTODISCOVERY",
+    "value": "true"
+  }, {
+    "name": "TENANTS",
+    "value": "{{ item.tenant }}"
+  }, {
+    "name": "VCACURL",
+    "value": "https://{{ item.name }}"
+  }, {
+    "name": "VRA_ENABLED_INTELLIGENT_PLACEMENT",
+    "value": "ON"
+  }, {
+    "name": "VRA_END_POINT_MONITORING",
+    "value": "Enabled"
+  }],
+  "credential": {
+    "id": "{{ item.credential_id }}"
+  },
+  "others": [],
+  "otherAttributes": {}
+}

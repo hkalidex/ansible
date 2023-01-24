@@ -1,0 +1,13 @@
+{
+  "adapterKindKey": "SDDCHealthAdapter",
+  "name": "SDDC Health Adapter Instance - {{ item.id }}",
+  "resourceKey": {
+    "name": "SDDC Health Adapter Instance - {{ item.id }}",
+    "adapterKindKey": "SDDCHealthAdapter",
+    "resourceKindKey": "SDDCHealth Instance",
+    "resourceIdentifiers": []
+  },
+  "description": "SDDC Health Adapter Instance for Collector {{ item.id }}",
+  "collectorId": {{ item.id }},
+  "monitoringInterval": 5
+}

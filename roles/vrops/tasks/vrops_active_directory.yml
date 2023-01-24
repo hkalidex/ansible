@@ -1,0 +1,93 @@
+---
+
+- name: Get Auth Sources
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources"
+    headers:
+      Accept: 'application/json'
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: true
+    force_basic_auth: true
+    validate_certs: false
+    status_code: 200
+  register: auth_sources
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_active_directory
+
+- name: Set number of auth sources found
+  set_fact:
+    num_auth_sources: "{{ auth_sources.json.sources | length }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_active_directory
+
+- name: Set Variables
+  set_fact:
+    ad_auth_source_exists: False
+  tags:
+    - vrops_active_directory
+
+- name: Check whether auth source already exists
+  set_fact:
+    ad_auth_source_exists: True
+  with_items: "{{ auth_sources.json.sources }}"
+  no_log: "{{ enable_no_log }}"
+  when:
+    - num_auth_sources > 0
+    - item.name == auth_domain_name and item.sourceType.id == auth_source_type
+  tags:
+    - vrops_active_directory
+
+- name: Add Active Directory auth type
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources"
+    body: "{{ lookup('template', 'ad-config.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: true
+    force_basic_auth: true
+    headers:
+      Content-Type: "application/json"
+    validate_certs: false
+    status_code: 200, 201
+  register: adresult
+  when: not ad_auth_source_exists
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_active_directory
+
+- name: Set AD status success if auth source already exists
+  set_fact:
+    adresult: {'status': '201'}
+  when: ad_auth_source_exists
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_active_directory
+
+# auth source is not created in the system and ssl certificate details are returned
+# as response. The caller has to call the PATCH (/auth/sources) API with the
+# certificate details.
+- name: Register AD cert
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/auth/sources"
+    body: active_directory_add_result.json
+    body_format: json
+    method: PATCH
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 201
+    register: active_directory_patch_cert
+  when: (adresult.status == 200) and (not ad_auth_source_exists)
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_active_directory

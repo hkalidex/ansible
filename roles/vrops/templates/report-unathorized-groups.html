@@ -1,0 +1,13 @@
+<html>
+    <body>
+        <p><b>WARNING</b>: Unauthorized AD group '{{ item.name }}' found with permissions {{ item['role-permissions'] }} in vROPs instance {{ vrops_nodes.master.fqdn }} </p>
+        <p> Action Required:<br />
+        <ol>
+            <li>Log into {{ vrops_nodes.master.fqdn }}</li>
+            <li>Remove the group (documentation on how can be found <a href='https://docs.vmware.com/en/vRealize-Operations-Manager/6.6/com.vmware.vcom.core.doc/GUID-9D92AC8E-FE55-4A57-BD7B-A427AC5CF4F3.html'>here)</a></li>
+            <li>Send an email to notify the group that it has been removed from vROps, providing them with the appropriate link to <a href='https://e2esm.intel.com/com.glideapp.servicecatalog_cat_item_view.do?sysparm_id=b49ce67a5825870039a3a049ba1db649'>request access</a> with justification</li>
+        </ol>
+        </p>
+        <p>Once the group has submitted the request, you can follow <a href='https://e2esm.intel.com/kb_view.do?sysparm_article=KB000587157'>KB000587157</a> to add the group</p>
+    </body>
+</html>

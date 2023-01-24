@@ -1,0 +1,54 @@
+---
+
+- name: Configure collector node ({{ item.value.name }})
+  uri:
+    url: https://{{ item.value.ip_address }}/casa/node/remotecollector
+    body: "{{ lookup('template', 'collector-config.json') }}"
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 202, 500
+    return_content: yes
+  register: collector_init_response
+  retries: 60
+  delay: 30
+  when: item.value.role == 'collector'
+  until: (collector_init_response.status == 202) or (collector_init_response.status == 500 and 'initial_password_already_set' in collector_init_response.content) or (collector_init_response.status == 500 and 'address is already used' in collector_init_response.content)
+  failed_when: "collector_init_response.status == 500 and 'initial_password_already_set' not in collector_init_response.content and 'address is already used' not in collector_init_response.content"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_config
+
+- name: Wait for node ({{ item.value.name }}) to enter cluster
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/deployment/cluster/current
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 200
+    return_content: yes
+  when: item.value.role == 'collector'
+  register: configuration_status
+  until: (item.value.name in configuration_status.content) or (item.value.ip_address in configuration_status.content)
+  retries: 6000
+  delay: 15
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_config
+
+- name: Wait 5 minutes before attempting to add the next collector node
+  pause:
+    minutes: 5
+  when: item.value.role == 'collector'
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_collector_config

@@ -1,0 +1,110 @@
+---
+
+- name: Process all VC's and ESX Hosts that will be deployed to in advance
+  get_esx_hosts_from_cluster:
+    vrops_nodes: "{{ vrops_nodes }}"
+    default_vc: "{{ mgmt_vc }}"
+    default_cluster: "{{ mgmt_vc_cluster }}"
+    default_username: "{{ mgmt_vc_username }}"
+    default_password: "{{ mgmt_vc_password }}"
+    vcenter_port: "{{ mgmt_vc_port }}"
+  register: vc_and_clusters
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Ping every vCenter that we need to deploy to
+  shell: ping -c 1 -w 10 {{ item }}
+  with_items: "{{ vc_and_clusters.msg.vcenters }}"
+  register: ping_results
+  ignore_errors: True
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Curl every vCenter that we need to deploy to
+  shell: curl -k -s --max-time 10 https://{{ item }}:443/sdk
+  with_items: "{{ vc_and_clusters.msg.vcenters }}"
+  register: curl_results
+  ignore_errors: True
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Curl every ESX Host that we may need to deploy to
+  shell: curl -k -s --max-time 10 https://{{ item }}:443/
+  with_items: "{{ vc_and_clusters.msg.esx_hosts }}"
+  register: esx_curl_results
+  ignore_errors: True
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Validate DNS records for every node-to-be-deployed
+  shell: nslookup {{ item.value.fqdn }} | grep -i {{ item.value.ip_address }}
+  with_dict: "{{ vrops_nodes }}"
+  register: dns_results
+  ignore_errors: True
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Prepare Results to be Sent to Team
+  set_fact:
+    failed_pings_list:
+      "{{ ping_results | json_query(\"results[?rc != `0`].item\") | unique}}"
+    successful_pings_list:
+      "{{ ping_results | json_query(\"results[?rc == `0`].item\") | unique}}"
+    failed_curls_list:
+      "{{ curl_results | json_query(\"results[?rc != `0`].item\") | unique}}"
+    successful_curls_list:
+      "{{ curl_results | json_query(\"results[?rc == `0`].item\") | unique}}"
+    failed_esx_curls_list:
+      "{{ esx_curl_results | json_query(\"results[?rc != `0`].item\") | unique}}"
+    successful_esx_curls_list:
+      "{{ esx_curl_results | json_query(\"results[?rc == `0`].item\") | unique}}"
+    failed_dns_list:
+      "{{ dns_results | json_query(\"results[?rc != `0`].item.value.fqdn\") | unique}}"
+    successful_dns_list:
+      "{{ dns_results | json_query(\"results[?rc == `0`].item.value.fqdn\") | unique}}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Notify Team by email if Failure Occurs
+  mail:
+    host: "{{ smtp_server }}"
+    port: "{{ smtp_port }}"
+    subject: "Network prechecks failed!"
+    to: "{{ email_pdl }}"
+    from: "donotreply.vrops@intel.com"
+    subtype: html
+    body: "{{ lookup('template', 'slack-ping-fail.html') }}"
+  when: lookup('env','VROPS_ENV') != 'local' and (failed_curls_list|length > 0 or failed_pings_list|length > 0 or failed_dns_list|length > 0 or failed_esx_curls_list|length > 0)
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Fail Build if Ping/Curl Network Precheck Failures Occurred
+  fail:
+    msg: Failed to curl {{failed_curls_list|join(', ')}} and failed to ping {{failed_pings_list|join(', ')}}
+  when: failed_curls_list|length > 0  # or failed_pings_list|length > 0
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Fail Build if ESX Curl Network Precheck Failures Occurred
+  fail:
+    msg: Failed to curl ESX hosts {{failed_curls_list|join(', ')}}
+  when: failed_esx_curls_list|length > 0
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking
+
+- name: Fail Build if DNS Network Precheck Failures Occurred
+  fail:
+    msg: Failed to match specified vROps Node IP with DNS lookup results for {{failed_dns_list|join(', ')}}
+  when: failed_dns_list|length > 0 and lookup('env','VROPS_ENV') != 'local'
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - precheck_networking

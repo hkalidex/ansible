@@ -1,0 +1,30 @@
+ {
+  "users": [
+  {% for item in sysaccounts_to_add %} 
+   {
+    "username" : "{{ sysaccounts_to_add[item].upn }}",
+    "lastName" : "{{ sysaccounts_to_add[item].cn }}",
+    "distinguishedName" : "{{ sysaccounts_to_add[item].dn }}",
+    "enabled" : true,
+    "groupIds" : null,
+    "roleNames" : [{{ sysaccounts_to_add[item].roleNames }}],
+    "role-permissions" : [ {
+      {% for permission in sysaccounts_to_add[item].permissions %}
+      "roleName" : "{{ permission.roleName}}",
+      "traversal-spec-instances" : [ {
+        "adapterKind" : "VMWARE",
+        "resourceKind" : "vSphere World",
+        "name" : "vSphere Hosts and Clusters",
+        "selectAllResources" : {{ permission.allowAllObjects }}
+       } ],
+      "allowAllObjects": {{ permission.allowAllObjects}},
+      "others" : [ ],
+      "otherAttributes" : {
+        }
+      } {% if not loop.last %}, {% endif %}
+      {% endfor %}
+      ]
+     } {% if not loop.last %}, {% endif %}
+   {% endfor %}
+  ]
+ }

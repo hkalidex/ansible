@@ -1,0 +1,176 @@
+---
+
+enable_no_log: "{{ lookup('env', 'ENABLE_NO_LOG') | bool }}"
+
+ansible_python_interpreter: python  # https://stackoverflow.com/a/31192729
+
+mgmt_vc: "fms7vcalabclh01.amr.corp.intel.com"
+mgmt_vc_username: "{{ lookup('env','VCENTER_USERNAME') }}"
+mgmt_vc_password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+mgmt_vc_port: 443
+
+mgmt_vc_datacenter: "FM7-IaaS (Folsom)"
+mgmt_vc_cluster: "fm7-cloud-coreb-vrops-clu01"
+mgmt_datastore: "fm7-lab-all_hosts 8B8K (21) 4TB 1"
+
+mgmt_network: "B_VM_Infra_v133_10.4.76.128-25"
+mgmt_netmask: 255.255.255.128
+mgmt_gateway: 10.4.76.129
+mgmt_dns: 10.248.2.1
+
+vrops_deployment_option: medium
+vrops_ova_location: /mnt/cifs/vrops/6.6.1
+vrops_ova_name: vRealize-Operations-Manager-Appliance-6.6.1.6163035_OVF10.ova
+
+svc_vrops_admin_password: "{{ lookup('env','VROPS_ADMIN_PASSWORD') }}"
+
+ntp_servers: "corp.intel.com"
+
+pki_cert_pem: "{{ lookup('file', 'pki/sandbox/sandbox.pem') }}\n{{ lookup('file', '/mnt/cifs/vrops/pki/sandbox.key') }}\n{{ lookup('file', 'pki/sha2chain.pem') }}\n"
+
+upgrade:
+  version: "6.6.1.8317356"
+  from_file: /mnt/cifs/vrops/6.6.1/hotfixes/vRealize_Operations_Manager-VA-6.6.1.8317355.pak
+
+solutions:
+  epops:
+    id: "ep-ops-os-and-availability"
+    version: "1.0.6028692"
+    from_file: /mnt/cifs/vrops/6.6.1/vRealize_Operations_EPOps_Agent_Upgrade-6.6.1.6178617.pak
+    adapter_instances: False
+  vcenter:
+    from_file: False
+    adapter_instances:
+      fms7vcalabclh01.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+      # Build Automation VC
+      fms07vcalab002.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: amr-vc-account
+  vrealize_automation:
+    from_file: False
+    adapter_instances:
+      fms07vranest08.amr.corp.intel.com:
+        collector_group: FM7_IGBN
+        credential: fm7-vranest08-vra-account
+        tenant: "enterprise cloud"
+  hpeoneview:
+    from_file: /mnt/cifs/vrops/packages/HPEOneViewAdapter-2.1.1.6_signed.pak
+    id: "HPOneviewAdapter"
+    version: "2.1.1.6"
+    adapter_instances:
+      fms07hpeovlab01.fm.intel.com:
+        ip_address: 10.232.65.216
+        collector_group: FM7_IGBN
+        credential: sndbx-amr-hpeoneview-account
+  sddc:
+    id: "SDDC Health"
+    version: "3.0.6074224"
+    from_file: /mnt/cifs/vrops/packages/vmware-MPforSDDCHealth-3.0-6074224.pak
+    adapter_instances: True
+  vrealize_business:
+    # TODO: This will be added in the following user story:
+    # https://rally1.rallydev.com/#/95416637724d/detail/userstory/155557980892
+    adapter_instances: False
+    from_file: False
+    # fms07vranest08.amr.corp.intel.com:
+    #   param1: asdf
+  loginsight:
+    # TODO: This will be added in the following user story:
+    # https://rally1.rallydev.com/#/95416637724d/detail/userstory/127874423052
+    adapter_instances: False
+    from_file: False
+    # fms07vranest08.amr.corp.intel.com:
+    #   param1: asdf
+
+credentials:  # each of these will be created as a credential instance in vROps
+  - name: amr-vc-account
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+    type: vc
+  - name: ed-vc-account
+    username: "{{ lookup('env','ED_VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','ED_VCENTER_PASSWORD') }}"
+    type: vc
+  - name: fm7-vranest08-vra-account
+    sysadmin_username: "{{ lookup('env','FM7_VRANEST08_SYSADMIN_USERNAME') }}"
+    sysadmin_password: "{{ lookup('env','FM7_VRANEST08_SYSADMIN_PASSWORD') }}"
+    superuser_username: "{{ lookup('env','FM7_VRANEST08_SUPERUSER_USERNAME') }}"
+    superuser_password: "{{ lookup('env','FM7_VRANEST08_SUPERUSER_PASSWORD') }}"
+    type: vra
+  - name: sndbx-amr-hpeoneview-account
+    username: "{{ lookup('env', 'SNDBX_AMR_HPONEVIEW_USERNAME') }}"
+    password: "{{ lookup('env', 'SNDBX_AMR_HPONEVIEW_PASSWORD') }}"
+    vrops_username: "admin"
+    vrops_password: "{{ svc_vrops_admin_password }}"
+    directory: 'local'
+    type: hpeoneview
+
+vc_credentials:
+  amr:
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+  ed:
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+vrops_nodes:
+  master:
+    role: master
+    name: "sndbxvropsma01"
+    fqdn: "sndbxvropsma01.icloud.intel.com"
+    vc: "fms7vcalabclh01.amr.corp.intel.com"
+    ip_address: 10.4.76.150
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data01:
+    role: data
+    name: "sndbxvropsda01"
+    fqdn: "sndbxvropsda01.icloud.intel.com"
+    vc: "fms7vcalabclh01.amr.corp.intel.com"
+    ip_address: 10.4.76.151
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  data02:
+    role: data
+    name: "sndbxvropsda02"
+    fqdn: "sndbxvropsda02.icloud.intel.com"
+    vc: "fms7vcalabclh01.amr.corp.intel.com"
+    ip_address: 10.4.76.152
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector01:
+    role: collector
+    name: "sndbxvropsrc01"
+    fqdn: "sndbxvropsrc01.icloud.intel.com"
+    ip_address: 10.4.76.153
+    netmask: 255.255.255.128
+    gateway: 10.4.76.129
+    vc: "fms7vcalabclh01.amr.corp.intel.com"
+    vc_datacenter: "FM7-IaaS (Folsom)"
+    vc_cluster: "fm7-cloud-coreb-vrops-clu01"
+    datastore: "fm7-lab-all_hosts 8B8K (21) 4TB 1"
+    network: "B_VM_Infra_v133_10.4.76.128-25"
+    collector_group: FM7_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"
+
+  collector02:
+    role: collector
+    name: "sndbxvropsrc02"
+    fqdn: "sndbxvropsrc02.icloud.intel.com"
+    ip_address: 10.4.76.154
+    netmask: 255.255.255.128
+    dns: 10.248.2.1
+    vc: "fms7vcalabclh01.amr.corp.intel.com"
+    vc_datacenter: "FM7-IaaS (Folsom)"
+    vc_cluster: "fm7-cloud-coreb-vrops-clu01"
+    datastore: "fm7-lab-all_hosts 8B8K (21) 4TB 1"
+    network: "B_VM_Infra_v133_10.4.76.128-25"
+    collector_group: FM7_IGBN
+    username: "{{ lookup('env','VCENTER_USERNAME') }}"
+    password: "{{ lookup('env','VCENTER_PASSWORD') }}"

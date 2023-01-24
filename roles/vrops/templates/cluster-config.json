@@ -1,0 +1,21 @@
+ {
+{% for node in node_thumbprints.results if node.stdout is defined and node.item.value.role == 'master' %}
+  "master" : {
+    "name" : "master",
+    "address" : "{{ node.item.value.ip_address }}",
+    "thumbprint" : "{{ node.stdout }}"
+  },
+{% endfor %}
+  "data" : [
+{% for node in node_thumbprints.results if node.stdout is defined and node.item.value.role == 'data' %}
+    {
+      "name" : "{{ node.item.value.name }}",
+      "address" : "{{ node.item.value.ip_address }}",
+      "thumbprint" : "{{ node.stdout }}"
+    }{% if not loop.last %}, {% endif %}
+{% endfor %}],
+  "admin_password" : "{{ svc_vrops_admin_password }}",
+  "ntp_servers" : [ "{{ ntp_servers }}" ],
+  "init" : {{ vrops_init | bool | lower }},
+  "dry-run" : false
+}'

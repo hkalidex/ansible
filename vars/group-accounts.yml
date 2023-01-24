@@ -1,0 +1,146 @@
+---
+
+group_accounts:
+  ehcs_cloud_admin:
+    name: "CN=EHCS_HEALTH_ADMIN,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Cloud Health Admins"
+    permissions:
+      - roleName: "Administrator"
+        allowAllObjects: "true"
+
+  gis_platform_os:
+    name: "CN=GIS Platform OS,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "EHCS Infrastructure Health Team"
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+
+  infra_cloud_engineering:
+    name: "CN=Infra_Cloud_Engineering,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "vRA Team"
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+
+  hosting_security_controls_read:
+    name: "CN=Hosting Security Controls Read,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Security Team"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  cloud_health_dashboard_read:
+    name: "CN=Cloud_Health_Dashboard_Read,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "General read-only access managed by AGS with management approval"
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "true"
+
+  cloud_health_dashboard_reports:
+    name: "CN=Cloud_Health_Dashboard_Report,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "General report management access managed by AGS with management approval"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  global_vcenter_unix_ops:
+    name: "CN=AD_EC Global Vcenter Unix Ops,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Design Hosting - Unix Ops vCenter Global Access. Created and managed by Rialto"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  amr_winvmware:
+    name: "CN=AD_EC AMR WINVMWare,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Design Hosting - AMR vCenter Global Access. Created and managed by Rialto"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  ger_winvmware_global:
+    name: "CN=AD_EC GER WINVMWare Global,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Design Hosting - GER vCenter Global Access. Created and managed by Rialto"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  gar_winvmware_global:
+    name: "CN=AD_EC GAR WINVMWare Global,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Design Hosting - GAR vCenter Global Access. Created and managed by Rialto"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  veritas_second_level:
+    name: "CN=Veritas Second Level,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Veritas Support - Managed by EAM"
+    permissions:
+      - roleName: "Administrator"
+        allowAllObjects: "true"
+
+  ad_sr_hub_operation:
+    name: "CN=AD_SR Hub Operation,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "SR Hub Operation - Managed by Rialto"
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "false"
+        traversalSpecs: "{'selectAllResources': True, 'adapterKind': 'VMWARE', 'name': 'vSphere Hosts and Clusters', 'resourceKind': 'vSphere World'}"
+
+  gsm_apps_group:
+    name: "CN=GSM APPS GROUP,OU=Delegated,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "GSM Apps Group "
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "false"
+        traversalSpecs: "{'selectAllResources': True, 'adapterKind': 'VMWARE', 'name': 'vSphere Hosts and Clusters', 'resourceKind': 'vSphere World'}"
+
+  sdi_infra_cw:
+    name: "CN=SDI Infra CW,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "SDI Infra CW"
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+
+  amr_platform_hosting_admins:
+    name: "CN=PlatformHostingAdmins,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "10077172 - Parsley, Tom/Managed by EAM but requires quarterly validation"
+    permissions:
+      - roleName: "ContentAdmin"
+        allowAllObjects: "true"
+
+  infosys_compute_admins:
+    name: "CN=Compute Health Admins,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Green Badge Compute Health Administrators - Infosys"
+    permissions:
+      - roleName: "Administrator"
+        allowAllObjects: "true"
+
+  infosys_compute_support:
+    name: "CN=Compute Admins,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "Green Badge Compute Support Administrators - Infosys"
+    permissions:
+      - roleName: "Administrator"
+        allowAllObjects: "true"
+
+  infosys_gsm_readonly_group:
+    name: "CN=Compute ReadOnly,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "InfoSys GSM ReadOnly Group "
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "false"
+        traversalSpecs: "{'selectAllResources': True, 'adapterKind': 'VMWARE', 'name': 'vSphere Hosts and Clusters', 'resourceKind': 'vSphere World'}"
+
+  infosys_gsm_group:
+    name: "CN=Compute Restricted Access,OU=Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+    description: "InfoSys GSM Restricted Access Group"
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+
+# Note: CCR grups should be excluded until after we've implemented the ability to restrict viewing access.
+# ccr_winvmware_global:
+#   name: "CN=AD_CC_EC CCR WINVMWare Global,OU=Rialto,OU=Application Managed,OU=Groups,DC=amr,DC=corp,DC=intel,DC=com"
+#   description: "Design Hosting - vCenter Global Access to CCR. Created and managed by Rialto"
+#   permissions:
+#     - roleName: "ContentAdmin"
+#       allowAllObjects: "true"

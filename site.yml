@@ -1,0 +1,5 @@
+---
+
+# file: site.yml
+- include: 00_vrops_cluster.yml
+- include: 01_vrops_remote.yml

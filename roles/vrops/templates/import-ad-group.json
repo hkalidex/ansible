@@ -1,0 +1,10 @@
+{
+  "name" : "{{ item.value.name }}",
+  "description" : "{{ item.value.description }}",
+  "authSourceId": "{{ ad_auth_source }}",
+  "roleNames": ["Everyone"],
+  "role-permissions" : [ {
+    "roleName" : "Everyone",
+    "allowAllObjects" : false
+  } ]
+}

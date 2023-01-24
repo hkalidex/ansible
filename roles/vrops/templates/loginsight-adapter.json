@@ -1,0 +1,12 @@
+{
+  "name": "{{ item.name }}",
+  "description": "{{ item.name }} {{ item.type }} adapter instance",
+  "collectorGroupId": "{{ item.collector_group_id }}",
+  "adapterKindKey": "LogInsightAdapter",
+  "resourceIdentifiers": [{
+    "name": "LOGINSIGHTURL",
+    "value": "{{ item.name }}"
+  }],
+  "others": [],
+  "otherAttributes": {}
+}

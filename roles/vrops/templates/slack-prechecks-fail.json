@@ -1,0 +1,11 @@
+{
+    "text": "At least one of the following vCenter deployability prechecks failed before starting the {{ lookup('env','VROPS_ENV') }} environment build:",
+    "icon_emoji": ":japanese_goblin:",
+    "channel": "#vrops",
+    "username": "{{ lookup('env','VROPS_ENV') }} deployability prechecks",
+    "attachments": [{
+        "text": "Connection Failures: {{ precheck_results.summary.connection_failures }}, Other Failures: {{ precheck_results.summary.other_failures }}"
+    }, {
+        "text": "See build logs for exact details."
+    }]
+}

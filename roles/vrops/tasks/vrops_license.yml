@@ -1,0 +1,68 @@
+---
+
+- name: Get the list of keys from vROps
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/deployment/licenses"
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    validate_certs: no
+    status_code: 200
+  register: licenses_on_server
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_license
+
+- name: Get list of licenses to delete and to upload
+  get_licenses_to_delete_and_upload:
+    licenses_on_server: "{{ licenses_on_server.json }}"
+    license_keys_file_path: "{{ license_keys_file_path }}"
+  register: licenses_to_delete_and_upload
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_license
+
+- name: Delete license keys not in the license keys file
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/deployment/licenses/{{ item }}"
+    method: DELETE
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 204
+  with_items: "{{ licenses_to_delete_and_upload.msg.license_ids_to_delete }}"
+  when: licenses_to_delete_and_upload.msg.license_ids_to_delete|length > 0
+  register: license_delete_result
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_license
+
+- name: Add vROps license key
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/suite-api/api/deployment/licenses"
+    body: "{{ lookup('template', 'license-add.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    validate_certs: no
+    status_code: 200
+  when: licenses_to_delete_and_upload.msg.license_keys_to_upload|length > 0
+  register: license_add_result
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_license

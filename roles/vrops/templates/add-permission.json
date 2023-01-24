@@ -1,0 +1,8 @@
+{
+  "roleName" : "{{ item.1.roleName }}",
+    "allowAllObjects" : {{ item.1.allowAllObjects }}
+    {% if item.1.allowAllObjects == "false" %}
+        ,
+        "traversal-spec-instances": [ {{ item.1.traversalSpecs }} ]
+    {% endif %}
+}

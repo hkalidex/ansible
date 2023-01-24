@@ -1,0 +1,42 @@
+---
+
+- name: Upload vROps PKI Certificates.
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/casa/cluster/security/postcert"
+    body: "{{ pki_cert_pem }}"
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "text/plain"
+    validate_certs: no
+    status_code: 200
+  register: certificate_install_result
+  no_log: "{{ enable_no_log }}"
+  retries: 100
+  delay: 5
+  until: certificate_install_result.status == 200
+  tags:
+    - vrops_pki
+
+- name: Activate vROps PKI Certificates.
+  uri:
+    url: "https://{{ vrops_nodes.master.ip_address }}/casa/cluster/security/certificate?certType=CUSTOM&action=ACTIVATE"
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "text/plain"
+    validate_certs: no
+    status_code: 200, 202
+  register: certificate_activate_result
+  no_log: "{{ enable_no_log }}"
+  retries: 100
+  delay: 5
+  until: certificate_activate_result.status == 202
+  tags:
+    - vrops_pki

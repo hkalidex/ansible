@@ -1,0 +1,194 @@
+---
+
+- name: Asynchronously check if each vrops node already exists
+  does_vm_exist:
+    vcenter_host: "{{ item.value.vc | default(mgmt_vc) }}"
+    vcenter_user: "{{ item.value.username | default(mgmt_vc_username) }}"
+    vcenter_password: "{{ item.value.password | default(vc_credentials.amr.password) }}"
+    vcenter_port: "{{ item.value.vc_port | default(mgmt_vc_port) }}"
+    vm_name: "{{ item.value.name }}"
+  with_dict: "{{ vrops_nodes }}"
+  register: vrops_node_exists
+  no_log: "{{ enable_no_log }}"
+  async: 3600
+  poll: 0
+  tags:
+    - vrops_ova_deploy
+
+- name: Wait for and fan in the results from the does_vm_exist task
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  with_items: "{{ vrops_node_exists.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+  register: vrops_node_exists_results
+  until: vrops_node_exists_results.finished
+  no_log: "{{ enable_no_log }}"
+  delay: 10
+  retries: 60
+  tags:
+    - vrops_ova_deploy
+
+- name: Determine if this is a Drone build
+  set_fact:
+    ci_system: "{{ lookup('env', 'CI_SYSTEM') | default(False, true) }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ova_deploy
+
+- name: If this is a Drone build, skip any nodes that Drone can't create
+  drone_skip_nodes:
+    vrops_node_exists: "{{ vrops_node_exists.results }}"
+  register: vrops_node_exists_drone_processed
+  when: ci_system == 'drone'
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ova_deploy
+
+- name: If this is a Drone build, set the processed vrops_node_exists results
+  set_fact:
+    vrops_node_exists: "{{ vrops_node_exists_drone_processed.msg }}"
+  when: ci_system == 'drone'
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ova_deploy
+
+- name: Filter Out Existing vROps Nodes
+  filter_out_existing_nodes_for_ova_deploy_paths:
+    vrops_node_exists_results: "{{ vrops_node_exists_results.results }}"
+  no_log: "{{ enable_no_log }}"
+  register: vrops_nodes_to_be_deployed
+  tags:
+    - vrops_ova_deploy
+
+- name: Asynchronously Get OVF Datacenter and Cluster Deploy Paths for all VCs
+  get_ovfdeploy_path:
+    vc_datacenter: "{{ item.value.vc_datacenter | default(mgmt_vc_datacenter) }}"
+    vc: "{{ item.value.vc | default(mgmt_vc) }}"
+    vc_cluster: "{{ item.value.vc_cluster | default(mgmt_vc_cluster) }}"
+    vc_username: "{{ item.value.username | default(mgmt_vc_username) }}"
+    vc_password: "{{ item.value.password | default(vc_credentials.amr.password) }}"
+  with_dict: "{{ vrops_nodes_to_be_deployed.msg }}"
+  when: vrops_nodes_to_be_deployed.msg != {}
+  async: 3600
+  poll: 0
+  no_log: "{{ enable_no_log }}"
+  register: ovf_deploypaths
+  tags:
+    - vrops_ovf_deploypaths
+    - vrops_ova_deploy
+
+- name: Wait for and fan in the results from OVF deploy paths task
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  with_items: "{{ ovf_deploypaths.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+  register: ovf_deploypaths_results
+  until: ovf_deploypaths_results.finished
+  when:
+    - vrops_nodes_to_be_deployed.msg != {}
+    - async_result_item.ansible_job_id is defined
+  no_log: "{{ enable_no_log }}"
+  delay: 10
+  retries: 60
+  tags:
+    - vrops_ovf_deploypaths
+    - vrops_ova_deploy
+
+- name: Build OVF path dictionary
+  set_fact:
+    ovf_paths: "{{ ovf_paths|default({}) | combine( {item.async_result_item.item.value.name: item.msg.ovf_deploypath})  }}"
+  with_items: "{{ ovf_deploypaths_results.results }}"
+  when:
+    - vrops_nodes_to_be_deployed.msg != {}
+    - item.msg.ovf_deploypath is defined and item.msg.ovf_deploypath
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ovf_deploypaths
+    - vrops_ova_deploy
+
+- name: Fail Build if OVF deploy path not found
+  fail:
+    msg: >
+         OVF PATH NOT FOUND: {{ item.async_result_item.item.value.name }} path: {{ item.msg.ovf_deploypath }}
+  with_items: "{{ ovf_deploypaths_results.results }}"
+  when: item.msg.ovf_deploypath is defined and not item.msg.ovf_deploypath
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ovf_deploypaths
+    - vrops_ova_deploy
+
+- name: Asynchronously deploy vRealize Operations Cluster OVAs that dont already exist
+  shell: >
+    {{ vrops_ovftool }}
+    '--name={{ item.async_result_item.item.value.name }}'
+    --acceptAllEulas
+    --allowExtraConfig
+    --powerOn
+    --skipManifestCheck
+    --noSSLVerify
+    '--proxy={{ proxy_chain }}'
+    '--X:enableHiddenProperties'
+    '--deploymentOption={{ item.item.value.deployment_size | default(vrops_deployment_option) }}'
+    '--datastore={{ item.async_result_item.item.value.datastore | default(mgmt_datastore) }}'
+    '--diskMode={{ vrops_disk_mode }}'
+    '--ipProtocol={{ vrops_ip_protocol }}'
+    '--network={{ item.async_result_item.item.value.network | default(mgmt_network) }}'
+    '--prop:vami.gateway.vRealize_Operations_Manager_Appliance={{ item.async_result_item.item.value.gateway | default(mgmt_gateway) }}'
+    '--prop:vami.DNS.vRealize_Operations_Manager_Appliance={{ item.async_result_item.item.value.dns | default(mgmt_dns) }}'
+    '--prop:vami.ip0.vRealize_Operations_Manager_Appliance={{ item.async_result_item.item.value.ip_address }}'
+    '--prop:vami.netmask0.vRealize_Operations_Manager_Appliance={{ item.async_result_item.item.value.netmask | default(mgmt_netmask) }}'
+    '--prop:guestinfo.cis.appliance.ssh.enabled=True'
+    '{{ item.async_result_item.item.value.vrops_ova_location | default(vrops_ova_location) }}/{{ item.async_result_item.item.value.vrops_ova_name | default(vrops_ova_name) }}'
+    'vi://{{ item.async_result_item.item.value.username | default(vc_credentials.amr.username) | urlencode }}:{{ item.async_result_item.item.value.password | default(vc_credentials.amr.password) | urlencode }}@{{ item.async_result_item.item.value.vc | default(mgmt_vc) }}/{{ ovf_deploypath }}/'
+  when:
+    - vrops_nodes_to_be_deployed.msg != {}
+    - item.msg == 'Appliance does not exist.' and item.async_result_item.item.value.role != 'vdp'  # leaving vdp role in for legacy compatibility as of US8051
+  with_items: "{{ vrops_node_exists_results.results }}"
+  async: 3600
+  poll: 0
+  no_log: "{{ enable_no_log }}"
+  ignore_errors: ignore_ova_deploy_errors
+  changed_when: False
+  register: ova_deploy_results
+  vars:
+    ovf_deploypath: "{{ ovf_paths[item.async_result_item.item.value.name] }}"
+  tags:
+    - vrops_ova_deploy
+
+- name: Wait for and fan in the results from the vrops ova deploy task
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  with_items: "{{ ova_deploy_results.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+  register: vrops_node_exists_results
+  until: vrops_node_exists_results.finished
+  when: async_result_item.ansible_job_id is defined
+  no_log: "{{ enable_no_log }}"
+  delay: 30
+  retries: 120
+  tags:
+    - vrops_ova_deploy
+
+- name: Wait on vROps CASA API availability for all nodes
+  uri:
+    url: "http://{{ item.value.ip_address }}:443/casa/cluster/status"
+    status_code: 401, 200
+  register: availability_result
+  until: (availability_result.status == 401) or (availability_result.status == 200)
+  delay: 30
+  retries: 120
+  when: item.value.role != 'vdp'
+  with_dict: "{{ vrops_nodes }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ova_deploy
+
+- name: Pause to allow any new nodes to stabilize
+  pause:
+    minutes: 3
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_ova_deploy

@@ -1,0 +1,59 @@
+---
+
+sys_accounts:
+  sys_cloudhealth:
+    dn: "CN=sys_cloudhealth,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "sys_cloudhealth"
+    upn: "sys_cloudhealth@intel.com"
+    roleNames: '"Administrator"'
+    permissions:
+      - roleName: "Administrator"
+        allowAllObjects: "true"
+  sys_vcsadmin:
+    dn: "CN=VCS_Admin1,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "VCS_Admin1"
+    upn: "vcs_admin1@intel.com"
+    roleNames: '"PowerUserMinusRemediation"'
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+  sys_dbaas01:
+    dn: "CN=sys_dbaas01,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "sys_dbaas01"
+    upn: "sys_dbaas01@intel.com"
+    roleNames: '"PowerUserMinusRemediation"'
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+  sys_dchvraprod:
+    dn: "CN=sys_dchvraprod,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "sys_dchvraprod"
+    upn: "sys_dchvraprod@intel.com"
+    roleNames: '"PowerUserMinusRemediation"'
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"
+  vitalsigns:
+    dn: "CN=vitalsigns,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "vitalsigns"
+    upn: "vitalsigns@intel.com"
+    roleNames: '"ReadOnly"'
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "true"
+  servicenow:
+    dn: "CN=sys_ISMP_vROps,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "sys_ISMP_vROps"
+    upn: "sys_ismp_vrops@intel.com"
+    roleNames: '"ReadOnly"'
+    permissions:
+      - roleName: "ReadOnly"
+        allowAllObjects: "true"
+  sys_cloudsdi:
+    dn: "CN=cloudsdi,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com"
+    cn: "cloudsdi"
+    upn: "cloudsdi@intel.com"
+    roleNames: '"PowerUserMinusRemediation"'
+    permissions:
+      - roleName: "PowerUserMinusRemediation"
+        allowAllObjects: "true"

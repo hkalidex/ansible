@@ -1,0 +1,304 @@
+---
+
+- name: Get All Credential Instances for Creating Adapters
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/credentials
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: current_credentials
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+    - vrops_vra_adapter_instances
+    - vrops_sddc_adapter_instances
+    - vrops_hpov_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+- name: Get Collector Groups from API
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectorgroups
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+  register: existing_collector_groups
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+    - vrops_vra_adapter_instances
+    - vrops_sddc_adapter_instances
+    - vrops_hpov_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+- name: Get Collectors from API
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/collectors
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+  register: existing_collectors
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+    - vrops_vra_adapter_instances
+    - vrops_sddc_adapter_instances
+    - vrops_hpov_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+- name: Get current Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: current_adapters_before_creation
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+    - vrops_vra_adapter_instances
+    - vrops_sddc_adapter_instances
+    - vrops_hpov_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+- name: Prepare Adapter Data
+  associate_adapter_credential_ids:
+    solutions: "{{ solutions }}"
+    current_credentials: "{{ current_credentials.json.credentialInstances }}"
+    collector_groups: "{{ existing_collector_groups.json.collectorGroups }}"
+    current_adapters: "{{ current_adapters_before_creation }}"
+    current_collectors: "{{ existing_collectors }}"
+    vrops_nodes: "{{ vrops_nodes }}"
+  register: adapter_instances_to_create
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+    - vrops_vra_adapter_instances
+    - vrops_sddc_adapter_instances
+    - vrops_hpov_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+- name: Create vSphere Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ lookup('template', 'vsphere-adapter.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    return_content: yes
+    status_code: 201,422,500
+  register: vsphere_adapter_instances_created_result
+  with_items: "{{ adapter_instances_to_create.msg }}"
+  no_log: "{{ enable_no_log }}"
+  when: item.type == 'vcenter'
+  failed_when: "vsphere_adapter_instances_created_result.status == 500 and 'exists' not in vsphere_adapter_instances_created_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vc_adapter_instances
+
+- name: Create vRA Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ lookup('template', 'vra-adapter.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    return_content: yes
+    status_code: 201,422,500
+  register: vra_adapter_instances_created_result
+  with_items: "{{ adapter_instances_to_create.msg }}"
+  no_log: "{{ enable_no_log }}"
+  when: item.type == 'vrealize_automation'
+  failed_when: "vra_adapter_instances_created_result.status == 500 and 'already exists' not in vra_adapter_instances_created_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vra_adapter_instances
+
+- name: Create Fact with all vRA Adapter Responses, for later use
+  set_fact:
+    vra_adapter_responses: "{{ vra_adapter_instances_created_result.results }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_vra_adapter_instances
+
+- name: Wait for SDDC adapters to be added
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    validate_certs: no
+    status_code: 200
+    return_content: yes
+  register: sddc_adapters_result
+  until: sddc_adapter in sddc_adapters_result.content
+  retries: 50
+  delay: 10
+  no_log: "{{ enable_no_log }}"
+  failed_when: "sddc_adapters_result.status == 500 and 'exists' not in sddc_adapters_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_sddc_adapter_instances
+
+- name: Create SDDC Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ lookup('template', 'sddc-adapter.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    return_content: yes
+    status_code: 201,422,500,404
+  register: sddc_adapter_instances_created_result
+  with_items: "{{ adapter_instances_to_create.msg }}"
+  no_log: "{{ enable_no_log }}"
+  when: item.type == 'sddc'
+  failed_when: "sddc_adapter_instances_created_result.status == 500 and 'already has' not in sddc_adapter_instances_created_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_sddc_adapter_instances
+
+- name: Create HPE OneView Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ lookup('template', 'hpov-adapter.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    return_content: yes
+    status_code: 201,422,500
+  register: hpov_adapter_instances_created_result
+  with_items: "{{ adapter_instances_to_create.msg }}"
+  no_log: "{{ enable_no_log }}"
+  when: item.type == 'hpeoneview'
+  failed_when: "hpov_adapter_instances_created_result.status == 500 and 'already exists' not in hpov_adapter_instances_created_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_hpov_adapter_instances
+
+- name: Create LogInsight Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ lookup('template', 'loginsight-adapter.json') }}"
+    body_format: json
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    return_content: yes
+    status_code: 201,422,500
+  register: loginsight_adapter_instances_created_result
+  with_items: "{{ adapter_instances_to_create.msg }}"
+  no_log: "{{ enable_no_log }}"
+  when: item.type == 'loginsight'
+  failed_when: "loginsight_adapter_instances_created_result.status == 500 and 'already exists' not in loginsight_adapter_instances_created_result.content"
+  tags:
+    - vrops_adapter_instances
+    - vrops_loginsight_adapter_instances
+
+# TODO: loginsight, vrealize business adapter instances here
+# IMPORTANT: when creating the templates for the adapters, MAKE SURE TO USE THE DESCRIPTION FORMAT:
+# {{ item.name }} {{ item.type }} adapter instance
+
+- name: Retrieve all Adapter Instances, Preparing to Verify Successful Creation
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: current_adapters_after_creation
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_adapter_instances_validate_creation
+
+- name: For Each Adapter Instance We Wanted to Create, Validate its Creation
+  validate_adapter_instances_created_successfully:
+    current_adapters_from_api: "{{ current_adapters_after_creation.json.adapterInstancesInfoDto }}"
+    solutions: "{{ solutions }}"
+    current_collectors: "{{ existing_collectors }}"
+    vrops_nodes: "{{ vrops_nodes }}"
+  register: adapter_instance_creation_validation
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances
+    - vrops_adapter_instances_validate_creation

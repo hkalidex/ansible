@@ -1,0 +1,48 @@
+{
+  "name": "{{ item.name }}",
+  "description": "{{ item.name }} {{ item.type }} adapter instance",
+  "collectorGroupId": "{{ item.collector_group_id }}",
+  "adapterKindKey": "VMWARE",
+  "resourceIdentifiers": [{
+    "name": "AUTODISCOVERY",
+    "value": "true"
+  }, {
+    "name": "PROCESSCHANGEEVENTS",
+    "value": "true"
+  }, {
+    "name": "VCURL",
+    "value": "https://{{ item.name }}/sdk"
+  }, {
+    "name": "AUTODISCOVERY",
+    "value": "true"
+  }, {
+    "name": "DISABLE_COMPUTATION_BASED_ON_CONSUMERS",
+    "value": "false"
+  }, {
+    "name": "DV_PORT_GROUP_DISABLED",
+    "value": "false"
+  }, {
+    "name": "DVS_DISABLED",
+    "value": "false"
+  }, {
+    "name": "ENABLE_ACTIONS",
+    "value": "true"
+  }, {
+    "name": "PDRS_STATS_PROVIDER",
+    "value": "false"
+  }, {
+    "name": "PROCESSCHANGEEVENTS",
+    "value": "true"
+  }, {
+    "name": "VM_FOLDER_DISABLED",
+    "value": "false"
+  }, {
+    "name": "VM_LIMIT",
+    "value": "2000000000"
+  }],
+  "credential": {
+    "id": "{{ item.credential_id }}"
+  },
+  "others": [],
+  "otherAttributes": {}
+}

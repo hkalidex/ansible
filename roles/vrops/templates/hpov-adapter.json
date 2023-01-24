@@ -1,0 +1,14 @@
+{
+    "name": "{{ item.name }}",
+    "adapterKindKey": "HPOneviewVCopsAdapter3",
+    "resourceKindKey": "hpOneViewAdapter3 Instance",
+    "resourceIdentifiers": [{
+        "name": "DataSourceName",
+        "value": "{{ item.ip_address }}"
+    }],
+    "description": "{{ item.name }} {{ item.type }} adapter instance",
+    "credential": {
+        "id": "{{ item.credential_id }}"
+    },
+    "collectorGroupId": "{{ item.collector_group_id }}"
+}

@@ -1,0 +1,229 @@
+---
+
+# ----------------------- Patching, Nondestructive: Verify Certificate Thumbprints for Adapters
+
+- name: Get All Adapter Instances, Preparing to Verify Each One's Certificate
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: current_adapters
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: JSON Query and Compile List of Adapters to get Thumbprints for
+  set_fact:
+    vsphere_adapters_thumbprints_list:
+      "{{ current_adapters | json_query(\"json.adapterInstancesInfoDto[?resourceKey.resourceKindKey=='VMwareAdapter Instance']\") }}"
+    vra_adapters_thumbprints_list:
+      "{{ current_adapters | json_query(\"json.adapterInstancesInfoDto[?resourceKey.resourceKindKey=='VCACAdapter Instance']\") }}"
+    sddc_adapters_list:
+      "{{ current_adapters | json_query(\"json.adapterInstancesInfoDto[?resourceKey.resourceKindKey=='SDDCHealth Instance']\") }}"
+    hpov_adapters_list:
+      "{{ current_adapters | json_query(\"json.adapterInstancesInfoDto[?resourceKey.resourceKindKey=='hpOneViewAdapter3 Instance']\") }}"
+    loginsight_adapters_list:
+      "{{ current_adapters | json_query(\"json.adapterInstancesInfoDto[?resourceKey.resourceKindKey=='LoginSight Adapter Instance']\") }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Get a List of Only the Existing vRA Adapters' Names
+  set_fact:
+    vra_adapter_names: "{{ vra_adapters_thumbprints_list | map(attribute='resourceKey') | map(attribute='name') | list }}"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Get All vRA IaaS Web Servers for the Current Environment
+  set_fact:
+    iaas_web:
+      iaas: "{{ vra_environments[item.0]['vra_iaas_web'] }}"
+      parent: "{{ item.0 }}"
+  with_nested:
+    - "{{ vra_adapter_names }}"
+    - "{{ vra_environments }} "
+  when: "item.0 == item.1"
+  register: vra_iaas_web_servers
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Prepare the List of vRA IaaS Web Server Names for Thumbprint Extraction
+  set_vra_iaas_web_list:
+    vra_iaas_web_instances: "{{ vra_iaas_web_servers.results }}"
+  register: vra_iaas_web_thumbprints_list
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Tell All the SDDC Adapters to Start Monitoring (aka Collecting)
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item.id }}/monitoringstate/start
+    method: PUT
+    body: "{{ lookup('template', 'adapter-start-monitoring.json') }}"
+    body_format: json
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: start_collecting_sddc_result
+  no_log: "{{ enable_no_log }}"
+  with_items:
+    "{{ sddc_adapters_list }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Get Certificate Thumbprints for All Adapters
+  shell: >
+         timeout 10 \
+         openssl s_client -connect {{ item.resourceKey.name }}:443 | \
+         sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+         openssl x509 -fingerprint -noout | sed 's/.*=//' | \
+         sed 's/://g' | awk '{print tolower($0)}'
+  with_items: "{{ vsphere_adapters_thumbprints_list + vra_adapters_thumbprints_list + vra_iaas_web_thumbprints_list.msg }}"
+  register: adapter_thumbprints_stdout
+  changed_when: False
+  ignore_errors: True
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Set create_vra_adapter_responses Fact to Designate Previously-Created vRA Adapters when adapter creation is not run
+  set_fact:
+    name: "{{ item.resourceKey.name }}"
+    skipped: "true"
+  when: vra_adapter_responses is not defined
+  no_log: "{{ enable_no_log }}"
+  with_items: "{{ vra_adapters_thumbprints_list }}"
+  register: create_vra_adapter_responses
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Set vra_adapter_responses Fact from create_vra_adapter_responses when vra_adapter responses not defined
+  set_fact:
+    vra_adapter_responses: "{{ create_vra_adapter_responses.results }}"
+  when: vra_adapter_responses is not defined
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Prepare Adapter and Thumbprint Data for Next vROps API Call
+  combine_thumbprints:
+    vrops_adapter_data: "{{ vsphere_adapters_thumbprints_list + vra_adapters_thumbprints_list }}"
+    openssl_certificate_data: "{{ adapter_thumbprints_stdout | json_query(\"results[*]\") }}"
+    adapter_responses: "{{ vra_adapter_responses }}"
+  register: adapters_ready_for_ssl_verification
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Tell vROps to Trust the Adapter Instances' Thumbprints
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    body: "{{ item }}"
+    body_format: json
+    method: PATCH
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: adapter_ssl_verify_result
+  retries: 10
+  delay: 3
+  with_items: "{{ adapters_ready_for_ssl_verification.msg }}"
+  # TODO: Uncomment this and remove the adapterKindKey clause when https://github.intel.com/HostingSDI/vrops-cicd/issues/56 is resolved.
+  # failed_when: "adapter_ssl_verify_result.json.messageFromAdapterInstance != 'Trust Established.' and adapter_ssl_verify_result.json.resourceKey.adapterKindKey == 'VMWARE'"
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Tell All SSL-Trusted Adapters to Start Monitoring (aka Collecting)
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item.id }}/monitoringstate/start
+    method: PUT
+    body: "{{ lookup('template', 'adapter-start-monitoring.json') }}"
+    body_format: json
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: start_collecting_result
+  no_log: "{{ enable_no_log }}"
+  with_items:
+    "{{ adapters_ready_for_ssl_verification.msg }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Tell All HPE OneView Adapters to Start Monitoring (aka Collecting)
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item.id }}/monitoringstate/start
+    method: PUT
+    body: "{{ lookup('template', 'adapter-start-monitoring.json') }}"
+    body_format: json
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: hpov_start_collecting_result
+  no_log: "{{ enable_no_log }}"
+  with_items:
+    "{{ hpov_adapters_list }}"
+  tags:
+    - vrops_adapter_instances_monitoring
+
+- name: Tell All LogInsight Adapters to Start Monitoring (aka Collecting)
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item.id }}/monitoringstate/start
+    method: PUT
+    body: "{{ lookup('template', 'adapter-start-monitoring.json') }}"
+    body_format: json
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: loginsight_start_collecting_result
+  no_log: "{{ enable_no_log }}"
+  with_items:
+    "{{ loginsight_adapters_list }}"
+  tags:
+    - vrops_adapter_instances_monitoring

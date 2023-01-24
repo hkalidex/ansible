@@ -1,0 +1,69 @@
+---
+
+- name: Run Network Pre-Checks
+  include: precheck_networking.yml tags=precheck_networking
+
+- name: Run Deployability Pre-Checks
+  include: precheck_deployability.yml tags=precheck_deployability
+
+- name: Destroy vRealize Operations Manager Nodes
+  include: vrops_ova_destroy.yml tags=vrops_ova_destroy
+
+- name: Deploy vRealize Operations Manager Nodes
+  include: vrops_ova_deploy.yml tags=vrops_ova_deploy
+
+- name: SSH to Every Node and Apply HTTPS Timeout Fix
+  include: vrops_https_timeout_fix.yml tags=vrops_https_timeout_fix
+
+- name: Disable Quiescing on vRealize Operations Nodes
+  include: vrops_disable_quiescing.yml tags=vrops_disable_quiescing
+
+- name: Configure vRealize Operations Master Node
+  include: vrops_master_config.yml tags=vrops_master_config
+
+- name: Configure vRealize Operations Data Nodes
+  include: vrops_data_config.yml tags=vrops_data_config
+  with_dict: "{{ vrops_nodes }}"
+
+- name: Configure vRealize Operations Collector Nodes
+  include: vrops_collector_config.yml tags=vrops_collector_config
+  with_dict: "{{ vrops_nodes }}"
+
+- name: Initialize vRealize Operations Cluster
+  include: vrops_cluster_init.yml tags=vrops_cluster_init
+
+- name: Configure Remote Collector Groups
+  include: vrops_collector_groups_config.yml tags=vrops_collector_groups_config
+
+- name: Add vRealize Operations License File
+  include: vrops_license.yml tags=vrops_license
+
+- name: Add Active Directory Configuration
+  include: vrops_active_directory.yml tags=vrops_active_directory
+
+- name: Add Group Account Access
+  include: vrops_group_accounts.yml tags=vrops_add_groups
+
+- name: Add Sys Account Access
+  include: vrops_sys_accounts.yml tags=vrops_add_sysaccounts
+
+- name: Install Solutions From Files (Management Packs)
+  include: vrops_solutions_from_files.yml tags=vrops_solutions_from_files,vrops_solutions_detect
+
+- name: Update/Purge Pre-Existing Adapter Instances
+  include: vrops_patch_adapter_instances.yml tags=vrops_patch_adapter_instances
+
+- name: Update/Purge Pre-Existing Credentials
+  include: vrops_patch_credentials.yml tags=vrops_patch_credentials
+
+- name: Create Credential Instances
+  include: vrops_credentials.yml tags=vrops_credentials
+
+- name: Create Adapter Instances
+  include: vrops_adapter_instances.yml tags=vrops_adapter_instances
+
+- name: Validate SSL certs, then Begin Adapter Instance Collecting & Monitoring
+  include: vrops_adapter_instances_monitoring.yml tags=vrops_adapter_instances_monitoring
+
+- name: Install vRealize Operations Cluster PKI Certificates
+  include: vrops_pki.yml tags=vrops_pki

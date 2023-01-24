@@ -1,0 +1,32 @@
+---
+
+- name: Disable quiescing in master and data nodes
+  vmxMod:
+    vcenter_host: "{{ item.value.vc | default(mgmt_vc) }}"
+    vcenter_user: "{{ item.value.username | default(mgmt_vc_username) }}"
+    vcenter_password: "{{ item.value.password | default(vc_credentials.amr.password) }}"
+    vcenter_port: "{{ item.value.vc_port | default(mgmt_vc_port) }}"
+    ip_address: "{{ item.value.ip_address }}"
+  with_dict: "{{ vrops_nodes }}"
+  async: 3600
+  poll: 0
+  when: item.value.role != 'vdp'
+  register: disable_quiescing_result
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_disable_quiescing
+
+- name: Wait for and fan in the results from the disable quiescing task.
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  with_items: "{{ disable_quiescing_result.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+  register: vrops_destroy_results
+  until: vrops_destroy_results.finished
+  when: async_result_item.ansible_job_id is defined
+  no_log: "{{ enable_no_log }}"
+  delay: 10
+  retries: 60
+  tags:
+    - vrops_disable_quiescing

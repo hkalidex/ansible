@@ -1,0 +1,331 @@
+---
+
+# Enterprise Cloud vRA Infrastructure http://wikiserver2.amr.corp.intel.com/dokuwiki-2012-01-25a/doku.php?id=enterprise_cloud_infrastructure&s[]=iaas
+# Design Cloud vRA Infrastructure http://wikiserver2.amr.corp.intel.com/dokuwiki-2012-01-25a/doku.php?id=designcloud_infrastructure_ec_vra&s[]=iaas
+
+vra_mgmt_vc:
+  mgmt01:
+    name: "fms07vcamgmt001.amr.corp.intel.com"
+    username: "{{ lookup('env', 'VCENTER_USERNAME' }}"
+    password: "{{ lookup('env', 'VCENTER_PASSWORD' }}"
+
+vra_environments:
+  enterprisecloud-int-two.intel.com:
+    # This should ALWAYS match what is in the vrealize_adapter_instances block in the integration-env.yml
+    version: "7.3"
+    vra_proxy_agents:
+      pxy01:
+        name: "fms07vrapxy021.amr.corp.intel.com"
+        ip: "10.110.111.169"
+        type: "proxy"
+      pxy02:
+        name: "fms07vrapxy022.amr.corp.intel.com"
+        ip: "10.110.111.172"
+        type: "proxy"
+
+    vra_app:
+      lb:
+        name: "enterprisecloud-int-two.intel.com"
+        ip: "10.110.116.193"
+        type: "load_balancer"
+      app01:
+        name: "FMS07VRAAPP021.AMR.CORP.INTEL.COM"
+        ip: "10.110.111.111"
+        type: "appliance"
+      app02:
+        name: "FMS07VRAAPP022.AMR.CORP.INTEL.COM"
+        ip: "10.110.111.112"
+        type: "appliance"
+
+    vra_vro:
+      lb:
+        name: "fms07vravrotwo.icloud.intel.com"
+        ip: "10.110.116.194"
+        type: "load_balancer"
+      vro01:
+        name: "FMS07IAAS021.amr.corp.intel.com"
+        ip: "10.110.111.81"
+        type: "appliance"
+      vro02:
+        name: "FMS07IAAS002.amr.corp.intel.com"
+        ip: "10.110.111.82"
+        type: "appliance"
+
+    vra_iaas_web:
+      lb:
+        name: "fms07iaastwo.icloud.intel.com"
+        ip: "10.110.116.189"
+        type: "load_balancer"
+      iaasweb01:
+        name: "fms07iaas021.amr.corp.intel.com"
+        ip: "10.110.111.115"
+        type: "appliance"
+      iaasweb02:
+        name: "	fms07iaas022.amr.corp.intel.com"
+        ip: "10.110.111.116"
+        type: "appliance"
+
+    vra_iaas_mgr:
+      lb:
+        name: "fms07iaasmgrtwo.icloud.intel.com"
+        ip: "10.110.116.190"
+        type: "load_balancer"
+      iaas01:
+        name: "FMS07IAASMGR021.amr.corp.intel.com"
+        ip: "10.110.111.119"
+        type: "appliance"
+      iaas02:
+        name: "FMS07IAASMGR022.amr.corp.intel.com"
+        ip: "10.110.111.120"
+        type: "appliance"
+
+    vra_sql:
+      lb:
+        name: "fms7iaasdbtwols.icloud.intel.com"
+        ip: "10.110.111.124"
+        type: "load_balancer"
+      sql01:
+        name: "FMS07IAASDB021.amr.corp.intel.com"
+        ip: "10.110.111.117"
+        type: "database"
+      sql02:
+        name: "FMS07IAASDB022.amr.corp.intel.com"
+        ip: "10.110.111.118"
+        type: "database"
+
+    vra_dem:
+      dem01:
+        name: "fms07vradmwk021.amr.corp.intel.com"
+        ip: "10.110.111.121"
+        type: "appliance"
+      dem02:
+        name: "fms07vradmwk022.amr.corp.intel.com"
+        ip: "10.110.111.122"
+        type: "appliance"
+
+  enterprisecloud-int.intel.com:
+    version: "7.2"
+    vra_proxy_agents:
+      pxy01:
+        name: "fms07vrapxy101.amr.corp.intel.com"
+        ip: "10.110.111.148"
+        type: "proxy"
+      pxy02:
+        name: "fms07vrapxy102.amr.corp.intel.com"
+        ip: "10.110.111.150"
+        type: "proxy"
+      pxy03:
+        name: "fms07vrapxy103.amr.corp.intel.com"
+        ip: "10.110.111.151"
+        type: "proxy"
+      pxy04:
+        name: "fms07vrapxy104.amr.corp.intel.com"
+        ip: "10.110.111.154"
+        type: "proxy"
+
+    vra_app:
+      lb:
+        name: "enterprisecloud-int.intel.com"
+        ip: "10.110.4.214"
+        type: "load_balancer"
+      app01:
+        name: "FMS07VRAAPP001.AMR.CORP.INTEL.COM"
+        ip: " 10.110.111.77"
+        type: "appliance"
+      app02:
+        name: "FMS07VRAAPP001.AMR.CORP.INTEL.COM"
+        ip: "10.110.111.79"
+        type: "appliance"
+
+    vra_vro:
+      lb:
+        name: "fms07vravro.icloud.intel.com"
+        ip: "10.110.4.163"
+        type: "load_balancer"
+      vro01:
+        name: "FMS07IAAS001.amr.corp.intel.com"
+        ip: "10.110.111.81"
+        type: "appliance"
+      vro02:
+        name: "FMS07IAAS002.amr.corp.intel.com"
+        ip: "10.110.111.82"
+        type: "appliance"
+
+    vra_iaas_web:
+      lb:
+        name: "fms07iaas.icloud.intel.com"
+        ip: "10.110.4.216"
+        type: "load_balancer"
+      iassweb01:
+        name: "fms07iaas001.amr.corp.intel.com"
+        ip: "10.110.111.81"
+        type: "appliance"
+      iassweb02:
+        name: "fms07iaas002.amr.corp.intel.com"
+        ip: "10.110.111.82"
+        type: "appliance"
+
+    vra_iaas_mgr:
+      lb:
+        name: "fms07iaasmgr.icloud.intel.com"
+        ip: "10.110.4.163"
+        type: "load_balancer"
+      iaasmgr01:
+        name: "FMS07IAASMGR001.amr.corp.intel.com"
+        ip: "10.110.111.97"
+        type: "appliance"
+      iaasmgr02:
+        name: "FMS07IAASMGR002.amr.corp.intel.com"
+        ip: "10.110.111.98"
+        type: "appliance"
+
+    vra_sql:
+      lb:
+        name: "fms07iaasdb.icloud.intel.com"
+        ip: "10.110.111.78"
+        type: "load_balancer"
+      sql01:
+        name: "FMS07IAASDB001.amr.corp.intel.com"
+        ip: "10.110.111.78"
+        type: "database"
+      sql02:
+        name: "FMS07IAASDB002.amr.corp.intel.com"
+        ip: "10.110.111.80"
+        type: "database"
+
+    vra_dem:
+      dem01:
+        name: "fms07vradmwk001.amr.corp.intel.com"
+        ip: "10.110.111.107"
+        type: "appliance"
+      dem02:
+        name: "fms07vradmwk001.amr.corp.intel.com"
+        ip: "10.110.111.108"
+        type: "appliance"
+
+  fms07vranest08.amr.corp.intel.com:
+    version: "7.2"
+    vra_proxy_agents:
+      pxy01:
+        name: ""
+        ip: "10.110.111.157"
+        type: "proxy"
+        vc: ""
+
+    vra_app:
+      app01:
+        name: "fms07vranest08.amr.corp.intel.com"
+        ip: "10.110.111.162"
+        type: "appliance"
+
+    vra_vro:
+      lb:
+        name: "fms07vranest08.amr.corp.intel.com"
+        ip: "10.110.111.77"
+        type: "load_balancer"
+      vro01:
+        name: "fms07vranest08.amr.corp.intel.com"
+        ip: "10.110.111.77"
+        type: "appliance"
+
+    vra_iaas_web:
+      lb:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "load_balancer"
+      iassweb01:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "appliance"
+
+    vra_iaas_mgr:
+      lb:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "load_balancer"
+      iassmgr01:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "appliance"
+
+    vra_sql:
+      lb:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "load_balancer"
+      sql01:
+        name: "fms07iaasnst08.amr.corp.intel.com"
+        ip: "10.110.111.160"
+        type: "database"
+
+    vra_dem:
+      dem01:
+        # THIS MIGHT NOT BE CORRECT, BUT IT RESOLVES
+        name: "fms07vradmwk002.amr.corp.intel.com"
+        ip: "10.110.111.108"
+        type: "appliance"
+
+  fms07vranest07.amr.corp.intel.com:
+    version: "7.3"
+    vra_proxy_agents:
+      pxy01:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "proxy"
+        vc: ""
+
+    vra_app:
+      app01:
+        name: "fms07vranest07.amr.corp.intel.com"
+        ip: " 10.110.111.77"
+        type: "appliance"
+
+    vra_vro:
+      lb:
+        name: "fms07vranest07.amr.corp.intel.com"
+        ip: "10.110.111.77"
+        type: "load_balancer"
+      vro01:
+        name: "fms07vranest07.amr.corp.intel.com"
+        ip: "10.110.111.77"
+        type: "appliance"
+
+    vra_iaas_web:
+      lb:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "load_balancer"
+      iassweb01:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "appliance"
+
+    vra_iaas_mgr:
+      lb:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "load_balancer"
+      iassmgr01:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "appliance"
+
+    vra_sql:
+      lb:
+        name: "fms07iaasnst05.amr.corp.intel.com"
+        ip: "10.110.111.189"
+        type: "load_balancer"
+      sql01:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "database"
+      sql02:
+        name: "fms07iaasnst05.amr.corp.intel.com"
+        ip: "10.110.111.189"
+        type: "database"
+
+    vra_dem:
+      dem01:
+        name: "fms07iaasnst07.amr.corp.intel.com"
+        ip: "10.110.111.157"
+        type: "appliance"

@@ -1,0 +1,74 @@
+---
+
+- name: Patching - Get All Adapter Instances, Preparing to Remove Extra Ones
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters
+    method: GET
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 200
+    return_content: yes
+  register: current_adapters_for_patching
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_patch_adapter_instances
+
+- name: Patching - Prepare List of Adapters to Delete
+  patching_get_adapters_list:
+    current_adapters_from_api: "{{ current_adapters_for_patching.json.adapterInstancesInfoDto }}"
+    solutions: "{{ solutions }}"
+  register: patching_adapters_to_delete
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_patch_adapter_instances
+
+# - name: Patching - Tell Target Adapter Instances to STOP Monitoring (aka Collecting)
+#  uri:
+#  url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item }}/monitoringstate/stop
+#     method: PUT
+#     body: "{{ lookup('template', 'vsphere-adapter-stop-monitoring.json') }}"
+#     body_format: json
+#     user: "{{ default_admin_user }}"
+#     password: "{{ svc_vrops_admin_password }}"
+#     force_basic_auth: yes
+#   headers:
+#       Content-Type: "application/json;charset=UTF-8"
+#       Accept: "application/json;charset=UTF-8"
+#     validate_certs: no
+#     timeout: 3600
+#     status_code: 200
+#     return_content: yes
+#   register: patching_vcenter_stop_monitoring_result
+#   no_log: "{{ enable_no_log }}"
+#   with_items: "{{ patching_adapters_to_delete.msg }}"
+#   tags:
+#     - vrops_patch_adapter_instances
+
+- name: Patching - Purge (delete) All Unnecessary Adapter Instances
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/suite-api/api/adapters/{{ item }}
+    method: DELETE
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json;charset=UTF-8"
+      Accept: "application/json;charset=UTF-8"
+    validate_certs: no
+    timeout: 3600
+    status_code: 204, 404
+    return_content: yes
+  register: patching_deleted_adapters
+  with_items: "{{ patching_adapters_to_delete.msg }}"
+  no_log: "{{ enable_no_log }}"
+  retries: 30
+  delay: 3
+  until: patching_deleted_adapters.status == 404
+  tags:
+    - vrops_patch_adapter_instances

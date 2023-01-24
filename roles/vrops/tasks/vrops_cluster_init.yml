@@ -1,0 +1,63 @@
+---
+
+- name: Pause for a minute to allow any new nodes to connect to the master.
+  pause:
+    minutes: 3
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_cluster_init
+
+- name: Check cluster initialization status.
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/sysadmin/cluster/membership
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    timeout: 3600
+    status_code: 202, 200
+  register: cluster_init_query
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_cluster_init
+
+- name: Initialize cluster if required.
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/cluster/init
+    method: POST
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    timeout: 3600
+    status_code: 202
+  register: cluster_init_response
+  when: ('ADDING' in cluster_init_query.content) or (cluster_init_query.json.onlineState == none)
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_cluster_init
+
+- name: Wait for cluster to initialize.
+  uri:
+    url: https://{{ vrops_nodes.master.ip_address }}/casa/sysadmin/cluster/membership
+    user: "{{ default_admin_user }}"
+    password: "{{ svc_vrops_admin_password }}"
+    return_content: yes
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+    status_code: 200
+  register: configuration_status
+  until: configuration_status.json.initialization_state == "NONE"
+  retries: 600
+  delay: 30
+  no_log: "{{ enable_no_log }}"
+  tags:
+    - vrops_cluster_init

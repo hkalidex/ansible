@@ -1,0 +1,9 @@
+
+{
+  "admin_password" : "{{ svc_vrops_admin_password }}",
+  "ntp_servers" : ["{{ ntp_servers }}"],
+  "name" : "{{ vrops_nodes.master.name }}",
+  "thumbprint" : "{{ master_node_thumbprint }}",
+  "init" : false,
+  "dry-run" : false
+}
